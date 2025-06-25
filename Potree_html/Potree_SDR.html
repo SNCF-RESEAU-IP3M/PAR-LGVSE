@@ -1,0 +1,2522 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <!-- Métadonnées et configuration de la page -->
+  <meta charset="utf-8">
+  <title>Salle des Relais</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <!-- LIGNE À AJOUTER POUR LE FAVICON -->
+  <link rel="icon" href="https://storage.googleapis.com/projet-potree-sncf/Images/Logo/Logo_LGV_Simple.png" type="image/png">
+
+  <!-- Chargement des polices Google -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Feuilles de styles pour Potree et autres bibliothèques -->
+  <link rel="stylesheet" type="text/css" href="/PAR-LGVSE/build/potree/potree.css">
+  <link rel="stylesheet" type="text/css" href="/PAR-LGVSE/libs/jquery-ui/jquery-ui.min.css">
+  <link rel="stylesheet" type="text/css" href="/PAR-LGVSE/libs/openlayers3/ol.css">
+  <link rel="stylesheet" type="text/css" href="/PAR-LGVSE/libs/spectrum/spectrum.css">
+  <link rel="stylesheet" type="text/css" href="/PAR-LGVSE/libs/jstree/themes/mixed/style.css">
+  <link rel="stylesheet" type="text/css" href="/PAR-LGVSE/build/potree/style_SNCF.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.pannellum.org/2.5/pannellum.css"/>
+  
+  <!-- Style spécifique pour le conteneur de l'image dans la popup -->
+  <style>
+    /* Style pour l'image dans la popup (largeur complète, débordement masqué) */
+    #popupImageContainer {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #wifiButton img {
+      width: 24px;
+      height: 24px;
+      /* ajoute ça pour rendre l’icône blanche */
+      filter: invert(1);
+    }
+    /* Conteneur de la jauge */
+    .gauge-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Espace sous la SVG */
+    .gauge {
+      width: 200px;
+      height: 100px;
+    }
+    
+    /* Label du débit */
+    .gauge-label {
+      margin-top: 0.5rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    /* Texte de statut (couleur, message) */
+    .gauge-status {
+      margin-top: 0.25rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Splash screen affiché au démarrage -->
+  <div id="splash">
+    <div class="loader"></div>
+  </div>
+
+  <!-- Popup Textes -->
+  <div id="textAnnotationPopupCustom">
+      <button id="closeTextAnnotationPopupCustom" onclick="hideTextAnnotationCustom()">×</button>
+      <div id="textAnnotationContentCustom"></div>
+  </div>
+
+  <!-- Boutons d'actions en mode Expert -->
+  <div id="splat_buttons">
+    <div id="pointBudgetContainer">
+      <label for="pointBudgetSlider">Points affichés : <span id="pointBudgetValue">2 000 000</span></label>
+      <input type="range" id="pointBudgetSlider" min="100000" max="10000000" step="100000" value="2000000">
+    </div>
+    <button id="toggleLissage">Activer lissage</button>
+    <!--<button id="toggleOrientedImages">Activer les images orientées</button>-->
+    <button id="toggleGuidedMode">Aller à la visite guidée</button>
+  </div>
+
+  <!-- Boutons de contrôle pour la caméra et les outils -->
+  <div id="buttonAndCameraContainer">
+    <div id="cameraPosition" class="tooltip-container">
+      <span class="custom-tooltip">Position de la caméra</span>
+    </div>
+    <div id="buttonsContainer">
+      <!-- Bouton pour mesurer un point -->
+      <div id="measureButton" class="buttonFrame tooltip-container tooltip-right">
+        <img src="/PAR-LGVSE/build/potree/resources/icons/pointeur.svg" alt="Mesurer">
+        <span class="custom-tooltip">Mesurer un point</span>
+      </div>
+      <!-- Bouton pour supprimer les mesures -->
+      <div id="deleteButton" class="buttonFrame tooltip-container tooltip-right">
+        <img src="/PAR-LGVSE/build/potree/resources/icons/poubelle.svg" alt="Supprimer">
+        <span class="custom-tooltip">Supprimer le/les point-s</span>
+      </div>
+      <!-- Bouton pour recentrer la vue -->
+      <div id="recenterButton" class="buttonFrame tooltip-container tooltip-right">
+        <img src="/PAR-LGVSE/build/potree/resources/icons/maison.svg" alt="Recentrer">
+        <span class="custom-tooltip">Recentrer la vue</span>
+      </div>
+      <!-- Bouton pour afficher les instructions de déplacement -->
+      <div id="instructionButton" class="buttonFrame tooltip-container tooltip-right">
+        <img src="/PAR-LGVSE/build/potree/resources/icons/question.svg" alt="Instructions">
+        <span class="custom-tooltip">Instructions de déplacement</span>
+      </div>
+      <!-- Bouton pour basculer en plein écran -->
+      <div id="fullscreenButton" class="buttonFrame tooltip-container tooltip-right">
+        <img src="/PAR-LGVSE/build/potree/resources/icons/fullscreen.svg" alt="Plein écran">
+        <span class="custom-tooltip">Ouvrir/fermer le plein écran</span>
+      </div>
+      <div id="wifiButton" class="buttonFrame tooltip-container tooltip-right">
+        <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Logo/wifi.svg" alt="Infos connexion">
+        <span class="custom-tooltip">Infos connexion</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slidebar latérale avec menu et informations -->
+  <div id="slidebar">
+    <div id="slidebarToggle">
+      <img src="/PAR-LGVSE/build/potree/resources/icons/menu_button.svg" class="potree_menu_toggle">
+    </div>
+    <div class="slidebar-header">
+      <a href="https://potree.org" target="_blank">potree.org - github</a>
+      <span class="slidebar-version">1.8.0</span>
+    </div>
+    <div class="slidebar-content">
+      <!-- Accordéon pour les informations sur le projet -->
+      <div class="accordion-item">
+        <div class="accordion-header">Informations sur le projet</div>
+        <div class="accordion-content">
+          <p>
+            Le projet a été mené par Charles Balland, dans le cadre de son projet de fin d’études d’ingénieur topographe.  
+            Cette initiative met à l’honneur le poste d’aiguillage de la première LGV française, resté en service jusqu’à fin 2024 avant son transfert à Lyon.  
+            Une plateforme de visualisation et de sauvegarde numérique du poste désormais fermé permet d’explorer son nuage de points, de parcourir ses modèles 3D et de consulter toutes les informations complémentaires.
+          </p>
+        </div>
+      </div>
+      <!-- Accordéon pour les informations sur Potree -->
+      <div class="accordion-item">
+        <div class="accordion-header">Lien vers Potree</div>
+        <div class="accordion-content">
+          <p>
+            Pour visualiser les divers projets déjà présents sur Potree, cliquez sur le lien ci-dessous :
+          </p>
+          <p>
+            <a href="https://potree.github.io/" target="_blank" rel="noopener noreferrer">
+              Accéder au viewer Potree
+            </a>
+          </p>
+        </div>
+      </div>
+      <!-- Accordéon pour présenter une journée au PAR -->
+      <div class="accordion-item">
+        <div class="accordion-header">Une journée au PAR</div>
+        <div class="accordion-content">
+          <p>
+           Embarquez pour une immersion exclusive au cœur du PAR de la LGV Paris-Lyon, installé au Centre Henri-Lang. Plongez dans l’effervescence du poste : suivez les opérateurs en pleine action, des échanges radio à la manipulation des aiguillages, en passant par la surveillance minutieuse des écrans de contrôle. Cette vidéo restitue la précision, la coordination et le savoir-faire qui ont rythmé la vie de ce jalon historique avant sa fermeture.
+          </p>
+          <!-- Miniature vidéo cliquable -->
+          <img id="videoThumbnail" src="/PAR-LGVSE/build/potree/resources/images/Miniature.jpeg" alt="Miniature vidéo" style="width:100%; cursor:pointer;">
+        </div>
+      </div>
+      <!-- Accordéon pour les informations sur Henri LANG -->
+      <div class="accordion-item">
+        <div class="accordion-header">Le centre Henri LANG</div>
+        <div class="accordion-content">
+          <p>
+            Henri Lang, né en 1895 à Rambervillers, était un brillant ingénieur et un haut responsable de la SNCF. Figure du service public, il s’est engagé pour un réseau ferroviaire moderne et accessible.
+            Arrêté en 1944 en raison de ses origines juives, il est déporté à Auschwitz, où il est assassiné.
+            Le centre qui porte son nom honore sa mémoire, son engagement et son courage face à la barbarie.
+          </p>
+          <div style="color: #888; font-size: 0.875rem; margin-top: 0.5rem; font-style: italic;">
+            Source : Mémorial de la Shoah
+          </div>
+        </div>
+      </div>
+      <!-- Accordéon pour présenter les collaborateurs -->
+      <div class="accordion-item">
+        <div class="accordion-header">À propos</div>
+        <div class="accordion-content">
+          <p>
+            Potree est une bibliothèque open source, développée à la Vienna University of Technology, qui permet de visualiser de grands nuages de points en 3D directement dans votre navigateur grâce à la technologie WebGL. Conçu pour gérer des ensembles de données volumineux (comme ceux issus de relevés LiDAR), Potree offre une navigation fluide et interactive, idéale pour explorer, analyser et partager des modèles 3D détaillés.
+            <a href="https://github.com/potree/potree" target="_blank" rel="noopener">(GitHub)</a>
+          </p>
+          <ul>
+            <li><strong>Auteur</strong> : Markus Schütz</li>
+            <li><strong>Licence</strong> : FreeBSD (2-clause BSD)</li>
+          </ul>
+      
+          <p><strong>Librairies utilisées</strong> :</p>
+          <ul>
+            <li>three.js</li>
+            <li>jQuery</li>
+            <li>laszip</li>
+            <li>Plas.io (laslaz)</li>
+            <li>OpenLayers3</li>
+            <li>proj4js</li>
+            <li>tween</li>
+            <li>i18next</li>
+          </ul>
+      
+          <p><strong>Donateurs</strong> :</p>
+          <ul>
+            <li>rapidlasso</li>
+            <li>georepublic</li>
+            <li>sitn</li>
+            <li>Veesus</li>
+            <li>sigeom sa</li>
+            <li>LBI ArchPro</li>
+          </ul>
+      
+          <p><strong>Crédits</strong> :</p>
+          <ul>
+            <li>Michael Wimmer</li>
+            <li>Claus Scheiblauer</li>
+            <li>TU Wien, Institute of Computer Graphics and Algorithms</li>
+            <li>Harvest4D</li>
+            <li>rapidlasso</li>
+            <li>georepublic</li>
+            <li>Howard Butler, Uday Verma, Connor Manning</li>
+            <li>CloudCompare</li>
+            <li>sitn</li>
+            <br><br>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!-- Logo Potree en bas de la slidebar -->
+    <div class="slidebar-logo">
+      <img src="/PAR-LGVSE/build/potree/resources/logo.svg" alt="Logo Potree">
+    </div>
+  </div>
+
+  <!-- Zone principale de rendu Potree -->
+  <div class="potree_container">
+    <div id="potree_render_area"></div>
+    <div id="potree_sidebar_container"></div>
+  </div>
+
+  <!-- Popup pour l'affichage des images agrandies -->
+  <div id="imagePopup" style="display: none;">
+    <div id="popupContent">
+      <span class="closePopup">&times;</span>
+  
+      <!-- IMAGE -->
+      <div id="popupImageContainer">
+        <img id="popupImage" src="" alt="Image agrandie">
+      </div>
+  
+      <!-- TEXTE -->
+      <div id="popupText"></div>
+  
+      <!-- FLECHES GAUCHE / DROITE POUR NAVIGATION -->
+      <span id="popupLeftArrow" class="arrow popupArrow" style="left: 20px;">‹</span>
+      <span id="popupRightArrow" class="arrow popupArrow" style="right: 20px;">›</span>
+    </div>
+  </div>
+
+  <!-- Fenêtre de bienvenue avec choix de mode (visite guidée ou exploration libre) -->
+  <div id="welcomePopup">
+    <div id="welcomePopupContent">
+      <h2>Bienvenue à la salle des relais du Poste d'Aiguillage et de Régulation de la ligne Paris-Lyon !</h2>
+      <p>Choisissez votre mode d'utilisation :</p>
+      <button id="btnSimplified">Visite guidée</button>
+      <button id="btnExpert">Explorer librement</button>
+    </div>
+  </div>
+  
+
+  <!-- Popup pour la lecture de vidéo -->
+  <div id="videoPopup">
+    <div id="videoPopupContent">
+      <span class="closeVideoPopup">&times;</span>
+      <video id="popupVideo" controls style="width:100%; max-height:80vh; border-radius:4px;">
+        <source src="" type="video/mp4">
+        Votre navigateur ne supporte pas la vidéo.
+      </video>
+      <div id="popupVideoText" style="color:#000; font-size:14px; line-height:1.4;"></div>
+    </div>
+  </div>
+
+  <!-- Popup pour les instructions de navigation -->
+  <div id="instructionPopup">
+    <div id="instructionPopupContent">
+      <span class="closeInstructionPopup">&times;</span>
+      <div id="instructionContainer">
+        <!-- Instruction pour la rotation -->
+        <div class="instructionRow">
+          <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Interface/clicgauche.png" alt="Rotation" class="instructionImage">
+          <div class="instructionText">
+            <h3>Rotation</h3>
+            <p>Cliquez et faites glisser pour faire pivoter la vue.<br>Double-cliquez pour déplacer la vue plus rapidement.</p>
+          </div>
+        </div>
+        <!-- Instruction pour le zoom -->
+        <div class="instructionRow">
+          <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Interface/clicmolette.png" alt="Zoom" class="instructionImage">
+          <div class="instructionText">
+            <h3>Zoom</h3>
+            <p>Utilisez la molette pour zoomer et dézoomer.</p>
+          </div>
+        </div>
+        <!-- Instruction pour le déplacement -->
+        <div class="instructionRow">
+          <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Interface/clicdroit.png" alt="Rotation" class="instructionImage">
+          <div class="instructionText">
+            <h3>Déplacement</h3>
+            <p>Cliquez et faites glisser pour déplacer la vue.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup d'instructions avec 3 images et des phrases -->
+  <div id="instructionsPopup" style="display: none;">
+    <div id="instructionsPopupContent">
+        <!-- Conteneur des images et des phrases -->
+        <div id="popupImagesContainer">
+            <!-- Image et phrase 1 -->
+            <p>Contrôlez le son et naviguez dans la narration :</p>
+            <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Interface/image-audio.png" alt="Contrôle audio">
+
+            <!-- Image et phrase 2 -->
+            <p>Explorez les différentes vues de la visite :</p>
+            <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Interface/image-camera.png" alt="Navigation caméra">
+            
+            <!-- Image et phrase 3 -->
+            <p>Découvrez et interagissez avec les éléments interactifs :</p>
+            <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Interface/image-interactions.png" alt="Interaction avec éléments">
+            
+        </div>
+
+        <!-- Bouton pour fermer la popup et commencer la visite -->
+        <button id="startGuidedTourBtn">C'est parti !</button>
+    </div>
+  </div>
+
+  <!-- Popup infos connexion -->
+  <div id="wifiPopup" style="display:none;">
+    <div id="wifiPopupContent">
+      <span class="closeWifiPopup" style="cursor:pointer;font-size:24px;">×</span>
+  
+      <h3 style="margin:0 0 .5rem;text-align:center;">
+        Vérification de la connexion
+      </h3>
+      <p style="text-align:center;margin:0 0 1rem;">
+        Une bonne connexion Internet est primordiale pour que les viewers fonctionnent correctement.
+      </p>
+  
+      <!-- La jauge -->
+      <div class="gauge-container">
+        <svg class="gauge" viewBox="0 0 200 100">
+          <!-- fond gris pâle -->
+          <path d="M10,100 A90,90 0 0,1 190,100"
+                stroke="#eee" stroke-width="20" fill="none" />
+          <!-- arc dynamique -->
+          <path id="gauge-arc"
+                d="M10,100 A90,90 0 0,1 190,100"
+                stroke="red" stroke-width="20" fill="none"
+                stroke-linecap="round" stroke-dasharray="0,565" />
+          <!-- repères -->
+          <text x="8"  y="98" font-size="10" fill="#333">0</text>
+          <text x="181" y="98" font-size="10" fill="#333">999</text>
+        </svg>
+  
+        <div class="gauge-label">
+          <span id="connection-speed">–</span> Mb/s
+        </div>
+        <div id="connection-status" class="gauge-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Galerie d'images verticale -->
+  <div id="verticalGallery">
+    <span class="arrow" id="scrollUp">&#9650;</span>
+    <div class="galleryItem" data-full="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2050.png" data-info="Salle des relais attenante au TCO" style="display: block;">
+      <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2050.png" alt="Salle des relais attenante au TCO">
+    </div>
+    <span class="arrow" id="scrollDown">&#9660;</span>
+  </div>
+    
+  <!-- Lien vers le site de la SNCF avec affichage du logo -->
+  <a href="https://www.sncf-reseau.com/fr" target="_blank">
+    <img id="logo" src="/PAR-LGVSE/build/potree/resources/images/Logo_SNCF.png" alt="Logo SNCF">
+  </a>
+
+  <!-- Bulle d'information globale (affichée lors du survol d'un élément de la galerie) -->
+  <div id="globalTitleBubble"></div>
+
+  <!-- Barre de contrôle pour la visite guidée via des hotspots -->
+  <div class="hotspot-controls-bar">
+    <div id="prev" class="arrow-button tooltip-container">
+      <img src="/PAR-LGVSE/build/potree/resources/icons/arrow_left.svg" alt="Gauche" />
+      <span class="custom-tooltip">Vue précédente</span>
+    </div>
+    <div id="hotspots" class="hotspot-label tooltip-container">
+      <span id="hotspotName">DÉPART DE LA VISITE</span>
+    </div>
+    <div id="next" class="arrow-button tooltip-container">
+      <img src="/PAR-LGVSE/build/potree/resources/icons/arrow_right.svg" alt="Droite" />
+      <span class="custom-tooltip">Vue suivante</span>
+    </div>
+    <div id="hotspotList" class="hotspot-list">
+      <ul>
+        <li><a href="#" data-hotspot-index="0">DÉPART DE LA VISITE</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Barre de contrôle audio -->
+  <div id="audioBar">
+    <input type="range" id="audioSeek" min="0" max="100" step="0.1" value="0">
+    <button id="playPauseButton">
+      <img id="playPauseIcon" src="/PAR-LGVSE/build/potree/resources/icons/pause.svg" alt="Pause" style="width:16px; height:16px;">
+    </button>
+    <button id="muteButton">
+      <img id="muteIcon" src="/PAR-LGVSE/build/potree/resources/icons/volume-medium-white-icon.svg" alt="Mute" style="width:16px; height:16px;">
+    </button>
+  </div>
+
+  <!-- Popûp information chargement -->
+  <div id="performancePopup" class="custom-popup" style="display: none;">
+    <div class="custom-popup-content">
+      <button class="custom-popup-close">×</button>
+      <h3>Conseil de performance</h3>
+  
+      <!-- Icône statique à la place du spinner -->
+      <div class="icon-performance">
+        <!-- Un SVG "jauge" simple -->
+        <svg viewBox="0 0 64 64" width="60" height="60" aria-hidden="true">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="#eee" stroke-width="4"/>
+          <path d="M32 4 A28 28 0 0 1 60 32" fill="none" stroke="#9c0390" stroke-width="6" stroke-linecap="round"/>
+          <line x1="32" y1="32" x2="44" y2="20" stroke="#e10b0b" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p>
+        Pour une expérience fluide, adaptez le nombre de points et le lissage selon les capacités de votre appareil.<br><br>
+        Veuillez patienter pendant le chargement des nuages de points pour profiter d’un rendu optimal.
+      </p>
+      <button id="performanceOkBtn">J’ai compris</button>
+    </div>
+  </div>
+
+  <!-- Popup Image 360° -->
+  <div id="popup360" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999;">
+    <span id="close360" style="position: absolute; top: 20px; right: 30px; font-size: 30px; color: white; cursor: pointer; z-index: 1000;">&times;</span>
+    <div id="panorama" style=" width: 100vw; height: 100vh;"></div>
+  </div>
+
+  <!-- Éléments audio pour les hotspots -->
+  <audio id="audioHotspot0" src="https://storage.googleapis.com/projet-potree-sncf/Audios/01.mp3" preload="auto"></audio>
+  <audio id="audioHotspot1" src="https://storage.googleapis.com/projet-potree-sncf/Audios/02.mp3" preload="auto"></audio>
+  <audio id="audioHotspot2" src="https://storage.googleapis.com/projet-potree-sncf/Audios/02.mp3" preload="auto"></audio>
+
+  <!-- Chargement des bibliothèques JavaScript -->
+  <script src="/PAR-LGVSE/libs/jquery/jquery-3.1.1.min.js"></script>
+  <script src="/PAR-LGVSE/libs/jquery-ui/jquery-ui.min.js"></script>
+  <script src="/PAR-LGVSE/libs/spectrum/spectrum.js"></script>
+  <script src="/PAR-LGVSE/libs/other/BinaryHeap.js"></script>
+  <script src="/PAR-LGVSE/libs/tween/tween.min.js"></script>
+  <script src="/PAR-LGVSE/libs/d3/d3.js"></script>
+  <script src="/PAR-LGVSE/libs/proj4/proj4.js"></script>
+  <script src="/PAR-LGVSE/libs/openlayers3/ol.js"></script>
+  <script src="/PAR-LGVSE/libs/i18next/i18next.js"></script>
+  <script src="/PAR-LGVSE/libs/jstree/jstree.js"></script>
+  <script src="/PAR-LGVSE/build/potree/potree.js"></script>
+  <script src="/PAR-LGVSE/libs/plasio/js/laslaz.js"></script>
+  <script src="https://cdn.pannellum.org/2.5/pannellum.js"></script>
+
+  <!-- Script principal pour configurer Potree et charger les éléments 3D -->
+  <script type="module">
+    // Importation des modules Three.js et des loaders pour les modèles OBJ et MTL
+    import * as THREE from "/PAR-LGVSE/libs/three.js/build/three.module.js";
+    import {OBJLoader} from "/PAR-LGVSE/libs/three.js/loaders/OBJLoader.js";
+    import {MTLLoader} from "/PAR-LGVSE/libs/three.js/loaders/MTLLoader.js";
+    import { OrientedImageLoader } from "/PAR-LGVSE/src/modules/OrientedImages/OrientedImages.js";
+    
+    // Définition des positions initiales de la caméra et de la cible
+    let initialPosition = new THREE.Vector3(11.30, 12.66, 0.58);
+    let initialTarget = new THREE.Vector3(8.57, 11.21, 1.57);
+    let lastHotspotView = { position: initialPosition, target: initialTarget };
+
+    // Initialisation du viewer Potree et configuration des paramètres de base
+    window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
+    viewer.setPointBudget(2000000);
+    viewer.setFOV(90);
+    viewer.loadSettingsFromURL();
+    
+    // Activation des effets EDL pour améliorer le rendu du nuage de points
+    viewer.setEDLEnabled(false);
+    viewer.setEDLRadius(1);
+    viewer.setEDLStrength(0);
+    viewer.setEDLOpacity(1);
+
+    /*
+
+    (async () => {
+        const cameraParamsPath = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Orient%C3%A9es/Orientation_g%C3%A9n%C3%A9rale.xml";
+        const imageParamsPath = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Orient%C3%A9es/Orientation_g%C3%A9n%C3%A9rale_test2.txt";
+    
+        // Charger les paramètres de la caméra et des images
+        const orientedImages = await OrientedImageLoader.load(cameraParamsPath, imageParamsPath, viewer);
+        window.orientedImages = orientedImages;
+        window.imagesActives = false;
+    
+        // Lire le fichier orientation.txt
+        const response = await fetch(imageParamsPath);
+        const text = await response.text();
+        const lines = text.split('\n');
+    
+        // Générer l'URL pour chaque image
+        const imageBaseURL = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Orient%C3%A9es/";
+    
+        // On suppose que chaque ligne contient les informations nécessaires pour une image (nom + autres données)
+        orientedImages.images.forEach((image, index) => {
+            const line = lines[index]; // Trouver la ligne correspondante pour l'image
+    
+            if (line) {
+                const tokens = line.split(/\s+/);
+                const imageName = tokens[0]; // Récupérer le nom de l'image (ex: "1H3A8819")
+    
+                // Construire l'URL de l'image en ajoutant l'extension .JPG
+                image.imageUrl = `${imageBaseURL}${imageName}`;
+    
+                // Ne pas charger la texture au départ, juste créer l'URL
+                image.textureLoaded = false;
+    
+                // Ne rendre les frustums visibles que lorsque les images sont activées
+                image.mesh.visible = false;  // Image cachée au départ
+                image.line.visible = false;  // Frustums cachés au départ
+            }
+        });
+    
+        // Ajouter les images à la scène
+        viewer.scene.scene.add(orientedImages.node);
+    
+        // Empêcher la réactivation des images par erreur
+        orientedImages.addEventListener('imageActivated', () => {
+            if (!window.imagesActives) {
+                orientedImages.exit();
+            }
+        });
+    
+        // Gestion du bouton pour activer/désactiver les images
+        const toggleBtn = document.getElementById('toggleOrientedImages');
+        toggleBtn.textContent = "Activer Images orientées";
+    
+        toggleBtn.addEventListener('click', () => {
+            window.imagesActives = !window.imagesActives;
+    
+            // Mettre à jour la visibilité des images et des frustums
+            for (const image of orientedImages.images) {
+                if (window.imagesActives) {
+                    image.mesh.visible = true;  // Afficher l'image
+                    image.line.visible = true;  // Afficher les frustums
+    
+                    // Charger la texture si elle n'est pas encore chargée
+                    if (!image.textureLoaded) {
+                        new THREE.TextureLoader().load(image.imageUrl, (texture) => {
+                            image.mesh.material.map = texture;
+                            image.mesh.material.needsUpdate = true;
+                            image.textureLoaded = true;  // Marquer comme chargé
+                        });
+                    }
+                } else {
+                    image.mesh.visible = false;  // Cacher l'image
+                    image.line.visible = false;  // Cacher les frustums
+                }
+            }
+    
+            toggleBtn.textContent = window.imagesActives
+                ? "Désactiver Images orientées"
+                : "Activer Images orientées";
+        });
+    
+    })();*/
+
+    // Ajout d'une lumière ambiante dans la scène
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    viewer.scene.scene.add(ambientLight);
+    
+    // Chargement du nuage de points via Potree.loadPointCloud
+    Potree.loadPointCloud("https://storage.googleapis.com/projet-potree-sncf/NuageSDR/Nuage_Sans_Sol_Sans_Portes/metadata.json", "Salle_SDR", function(e){
+      viewer.scene.addPointCloud(e.pointcloud);
+      let material = e.pointcloud.material;
+      material.size = 2;
+      material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+      e.pointcloud.position.set(0, 0, 0);
+    
+      // Positionnement initial de la vue
+      viewer.scene.view.setView(initialPosition, initialTarget);
+
+      // On récupère le span qui affiche le nom
+      const hotspotNameEl = document.getElementById("hotspotName");
+
+      // Fonction de définition d'une boite limitante pour le déplacement
+      const cameraLimitBox = {
+          minX: -100,
+          maxX: 100,
+          minY: -100,
+          maxY: 100,
+          minZ: 0.2,
+          maxZ: 3
+      };
+  
+      function clampToBox(pos, box) {
+        if (!pos) return;
+        pos.x = Math.max(box.minX, Math.min(box.maxX, pos.x));
+        pos.y = Math.max(box.minY, Math.min(box.maxY, pos.y));
+        pos.z = Math.max(box.minZ, Math.min(box.maxZ, pos.z));
+      }
+  
+  
+      // On ignore la première mise à jour pour préserver la vue initiale 
+      let skipFirstClamp = true;
+      viewer.addEventListener("update", () => {
+        if (skipFirstClamp) {
+          skipFirstClamp = false;
+          return; // ne pas clamp la caméra sur le premier update
+        }
+  
+        const cam  = viewer.scene.getActiveCamera();
+        const view = viewer.scene.view;
+  
+        if (cam?.position) {
+            clampToBox(cam.position, cameraLimitBox);
+        }
+        if (view?.position) {
+            clampToBox(view.position, cameraLimitBox);
+        }
+        if (view?.target) {
+            clampToBox(view.target, cameraLimitBox);
+        }
+        if (typeof view.getPivot === "function") {
+            const pivot = view.getPivot();
+          if (pivot) clampToBox(pivot, cameraLimitBox);
+        }
+      });
+    
+      // Désactivation du mode haute qualité par défaut et mise à jour du texte du bouton
+      viewer.useHQ = false;
+      document.getElementById("toggleLissage").textContent = "Activer lissage";
+
+      // fonction qui permet de cliquer sur une annotation même si l'animation du hotpsot n'est pas terminée
+      function addAnnotationClickHandler(annotation, duration = 1000) {
+        annotation.title.find("img").click((event) => {
+          event.stopPropagation();
+          if (typeof TWEEN !== 'undefined') {
+            TWEEN.removeAll();
+          }
+          // Utilise les coordonnées déjà stockées dans l'annotation
+          viewer.scene.view.setView(annotation.cameraPosition, annotation.cameraTarget, duration);
+          // et on change le label
+          hotspotNameEl.textContent = "RECENTRER LA VUE";
+        });
+      }
+
+      // fonction qui permet de cliquer sur une annotation textuelle même si l'animation du hotpsot n'est pas terminée
+      function addTextAnnotationClickHandler(annotation, duration = 1000) {
+          annotation.title.find("img").click((event) => {
+              event.stopPropagation();
+              if (typeof TWEEN !== 'undefined') {
+                  TWEEN.removeAll();
+              }
+              // Ne fait un setView que si les coordonnées sont définies
+              if (annotation.cameraPosition && annotation.cameraTarget) {
+                  viewer.scene.view.setView(annotation.cameraPosition, annotation.cameraTarget, duration);
+              }
+              // Toujours afficher la popup
+              showTextAnnotationCustom(annotation.description);
+              hotspotNameEl.textContent = "RECENTRER LA VUE";
+          });
+      }
+      
+      //bouton de recentrage sur la vue initiale
+      const btn = document.getElementById("recenterButton");
+      btn.querySelector(".custom-tooltip").textContent = "Retour à la vue initiale";
+
+      // ajoute le listener ici, dans le même scope que initialPosition
+      btn.addEventListener("click", () => {
+        viewer.scene.view.setView(
+          initialPosition.clone(),
+          initialTarget.clone(),
+          1000
+        );
+      });
+
+      /**
+      * Met en pause et remet à zéro toutes les annotations audio
+      */
+      function pauseAllAnnotationAudio() {
+        document.querySelectorAll('audio[id^="audioAnnotation"]').forEach(a => {
+          a.pause();
+          a.currentTime = 0;
+        });
+      }
+
+
+      //---------------- Annotations audios ----------------//
+
+      //---------------- Annotations textuelles ----------------//
+    
+      //---------------- Annotations textuelles explications ----------------//
+
+      //---------------- Annotations imagées ----------------//
+      // Annotation Image 1 (Archives)
+      let iconImage1 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage1.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage1.cameraPosition, annotationImage1.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2194.jpg";
+          const imageDescription = "Armoire d'archives";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage1 = new Potree.Annotation({
+        position: new THREE.Vector3(11.91, 12.48, 1.39),
+        title: iconImage1,
+        cameraPosition: new THREE.Vector3(10.45, 12.50, 1.50),
+        cameraTarget: new THREE.Vector3(11.77, 12.24, 1.41)
+      });
+      addAnnotationClickHandler(annotationImage1);
+      annotationImage1.visible = true;
+      viewer.scene.annotations.add(annotationImage1);
+
+      // Annotation Image 2 (Panneau)
+      let iconImage2 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage2.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage2.cameraPosition, annotationImage2.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/20250306_162137.jpg";
+          const imageDescription = "Armoire d'archives";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage2 = new Potree.Annotation({
+        position: new THREE.Vector3(5.26, 11.28, 1.73),
+        title: iconImage2,
+        cameraPosition: new THREE.Vector3(4.96, 11.44, 1.75),
+        cameraTarget: new THREE.Vector3(5.26, 11.28, 1.73)
+      });
+      addAnnotationClickHandler(annotationImage2);
+      annotationImage2.visible = true;
+      viewer.scene.annotations.add(annotationImage2);
+
+      // Annotation Image 3 (carte)
+      let iconImage3 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage3.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage3.cameraPosition, annotationImage3.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2188.jpg";
+          const imageDescription = "Armoire d'archives";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage3 = new Potree.Annotation({
+        position: new THREE.Vector3(12.48, 13.61, 0.56),
+        title: iconImage3,
+        cameraPosition: new THREE.Vector3(11.79, 14.04, 1.59),
+        cameraTarget: new THREE.Vector3(12.46, 13.87, 1.08)
+      });
+      addAnnotationClickHandler(annotationImage3);
+      annotationImage3.visible = true;
+      viewer.scene.annotations.add(annotationImage3);
+
+      // Annotation Image 4 (Armoire_stockage)
+      let iconImage4 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage4.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage4.cameraPosition, annotationImage4.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0738.JPG";
+          const imageDescription = "Armoire de stockage d'éléments techniques";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage4 = new Potree.Annotation({
+        position: new THREE.Vector3(17.94, 13.20, 1.52),
+        title: iconImage4,
+        cameraPosition: new THREE.Vector3(16.90, 13.24, 1.51),
+        cameraTarget: new THREE.Vector3(17.94, 13.20, 1.52)
+      });
+      addAnnotationClickHandler(annotationImage4);
+      annotationImage4.visible = true;
+      viewer.scene.annotations.add(annotationImage4);
+
+      // Annotation Image 5 (Armoire relais1)
+      let iconImage5 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage5.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage5.cameraPosition, annotationImage5.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0602.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage5 = new Potree.Annotation({
+        position: new THREE.Vector3(12.19, 15.97, 1.99),
+        title: iconImage5,
+        cameraPosition: new THREE.Vector3(12.63, 16.70, 1.84),
+        cameraTarget: new THREE.Vector3(12.19, 15.97, 1.99)
+      });
+      addAnnotationClickHandler(annotationImage5);
+      annotationImage5.visible = true;
+      viewer.scene.annotations.add(annotationImage5);
+
+      // Annotation Image 6 (Armoire relais2)
+      let iconImage6 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage6.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage6.cameraPosition, annotationImage6.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0600.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage6 = new Potree.Annotation({
+        position: new THREE.Vector3(12.19, 15.97, 0.8),
+        title: iconImage6,
+        cameraPosition: new THREE.Vector3(12.53, 16.60, 1.23),
+        cameraTarget: new THREE.Vector3(12.19, 15.97, 0.8)
+      });
+      addAnnotationClickHandler(annotationImage6);
+      annotationImage6.visible = true;
+      viewer.scene.annotations.add(annotationImage6);
+
+      // Annotation Image 7 (Armoire relais2)
+      let iconImage7 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage7.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage7.cameraPosition, annotationImage7.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0611.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage7 = new Potree.Annotation({
+        position: new THREE.Vector3(8.47, 17.43, 0.97),
+        title: iconImage7,
+        cameraPosition: new THREE.Vector3(8.10, 16.73, 1.34),
+        cameraTarget: new THREE.Vector3(8.47, 17.43, 0.97)
+      });
+      addAnnotationClickHandler(annotationImage7);
+      annotationImage7.visible = true;
+      viewer.scene.annotations.add(annotationImage7);
+
+      // Annotation Image 8 (Armoire relais2)
+      let iconImage8 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage8.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage8.cameraPosition, annotationImage8.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0613.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage8 = new Potree.Annotation({
+        position: new THREE.Vector3(8.47, 17.43, 1.91),
+        title: iconImage8,
+        cameraPosition: new THREE.Vector3(8.15, 16.78, 1.71),
+        cameraTarget: new THREE.Vector3(8.47, 17.43, 1.91)
+      });
+      addAnnotationClickHandler(annotationImage8);
+      annotationImage8.visible = true;
+      viewer.scene.annotations.add(annotationImage8);
+
+      // Annotation Image 9 (Armoire relais3)
+      let iconImage9 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage9.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage9.cameraPosition, annotationImage9.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0606.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage9 = new Potree.Annotation({
+        position: new THREE.Vector3(13.88, 8.77, 0.76),
+        title: iconImage9,
+        cameraPosition: new THREE.Vector3(14.20, 9.22, 1.17),
+        cameraTarget: new THREE.Vector3(13.88, 8.77, 0.76)
+      });
+      addAnnotationClickHandler(annotationImage9);
+      annotationImage9.visible = true;
+      viewer.scene.annotations.add(annotationImage9);
+
+      // Annotation Image 10 (Armoire relais3)
+      let iconImage10 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage10.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage10.cameraPosition, annotationImage10.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0608.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage10 = new Potree.Annotation({
+        position: new THREE.Vector3(13.88, 8.77, 1.65),
+        title: iconImage10,
+        cameraPosition: new THREE.Vector3(14.20, 9.22, 1.86),
+        cameraTarget: new THREE.Vector3(13.88, 8.77, 1.65)
+      });
+      addAnnotationClickHandler(annotationImage10);
+      annotationImage10.visible = true;
+      viewer.scene.annotations.add(annotationImage10);
+
+      // Annotation Image 11 (Armoire relais4)
+      let iconImage11 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage11.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage11.cameraPosition, annotationImage11.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8833.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage11 = new Potree.Annotation({
+        position: new THREE.Vector3(4.29, 9.49, 0.83),
+        title: iconImage11,
+        cameraPosition: new THREE.Vector3(4.56, 10, 1.30),
+        cameraTarget: new THREE.Vector3(4.29, 9.49, 0.83)
+      });
+      addAnnotationClickHandler(annotationImage11);
+      annotationImage11.visible = true;
+      viewer.scene.annotations.add(annotationImage11);
+
+      // Annotation Image 12 (Armoire relais4)
+      let iconImage12 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage12.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage12.cameraPosition, annotationImage12.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8830.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage12 = new Potree.Annotation({
+        position: new THREE.Vector3(4.29, 9.49, 1.43),
+        title: iconImage12,
+        cameraPosition: new THREE.Vector3(4.56, 10, 1.30),
+        cameraTarget: new THREE.Vector3(4.29, 9.49, 1.43)
+      });
+      addAnnotationClickHandler(annotationImage12);
+      annotationImage12.visible = true;
+      viewer.scene.annotations.add(annotationImage12);
+
+      // Annotation Image 13 (Armoire 2 Avant haut)
+      let iconImage13 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage13.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage13.cameraPosition, annotationImage13.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8857.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage13 = new Potree.Annotation({
+        position: new THREE.Vector3(3.98, 8.90, 1.91),
+        title: iconImage13,
+        cameraPosition: new THREE.Vector3(3.71, 8.42, 1.84),
+        cameraTarget: new THREE.Vector3(3.98, 8.90, 1.91)
+      });
+      addAnnotationClickHandler(annotationImage13);
+      annotationImage13.visible = true;
+      viewer.scene.annotations.add(annotationImage13);
+
+      // Annotation Image 14 (Armoire 2 Avant bas)
+      let iconImage14 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage14.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage14.cameraPosition, annotationImage14.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8861.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage14 = new Potree.Annotation({
+        position: new THREE.Vector3(3.98, 8.90, 1.30),
+        title: iconImage14,
+        cameraPosition: new THREE.Vector3(3.71, 8.42, 1.50),
+        cameraTarget: new THREE.Vector3(3.98, 8.90, 1.30)
+      });
+      addAnnotationClickHandler(annotationImage14);
+      annotationImage14.visible = true;
+      viewer.scene.annotations.add(annotationImage14);
+
+      // Annotation Image 15 (Armoire 1 Arrière haut)
+      let iconImage15 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage15.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage15.cameraPosition, annotationImage15.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8808.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage15 = new Potree.Annotation({
+        position: new THREE.Vector3(7.02, 15.49, 1.94),
+        title: iconImage15,
+        cameraPosition: new THREE.Vector3(6.73, 14.93, 1.8),
+        cameraTarget: new THREE.Vector3(7.02, 15.49, 1.94)
+      });
+      addAnnotationClickHandler(annotationImage15);
+      annotationImage15.visible = true;
+      viewer.scene.annotations.add(annotationImage15);
+
+      // Annotation Image 16 (Armoire 1 Arrière milieu)
+      let iconImage16 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage16.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage16.cameraPosition, annotationImage16.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8810.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage16 = new Potree.Annotation({
+        position: new THREE.Vector3(7.02, 15.49, 1.39),
+        title: iconImage16,
+        cameraPosition: new THREE.Vector3(6.73, 14.93, 1.55),
+        cameraTarget: new THREE.Vector3(7.02, 15.49, 1.39)
+      });
+      addAnnotationClickHandler(annotationImage16);
+      annotationImage16.visible = true;
+      viewer.scene.annotations.add(annotationImage16);
+
+      // Annotation Image 17 (Armoire 1 Arrière bas)
+      let iconImage17 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/picture.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      iconImage17.find("img").click((event) => {
+        event.stopPropagation();
+        viewer.scene.view.setView(annotationImage17.cameraPosition, annotationImage17.cameraTarget, 1000);
+        setTimeout(() => {
+          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/1H3A8812.JPG";
+          const imageDescription = "Armoire relais";
+          $("#popupImage").attr("src", imageUrl);
+          $("#popupText").text(imageDescription);
+          $("#imagePopup").css("display", "flex");
+        }, 2000);
+      });
+      let annotationImage17 = new Potree.Annotation({
+        position: new THREE.Vector3(7.02, 15.49, 0.8),
+        title: iconImage17,
+        cameraPosition: new THREE.Vector3(6.73, 14.93, 1.00),
+        cameraTarget: new THREE.Vector3(7.02, 15.49, 0.8)
+      });
+      addAnnotationClickHandler(annotationImage17);
+      annotationImage17.visible = true;
+      viewer.scene.annotations.add(annotationImage17);
+
+
+      //---------------- Liens visualisation 3D ----------------//
+      // Annotation 3D 1
+      let icon3D1 = $(`<!-- Icône pour annotation 3D qui ouvre TCO_Tableau.html --> 
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/3d.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3D1.find("img").click((event) => {
+        event.stopPropagation();
+        window.open("/PAR-LGVSE/3DHOP_html/3DHOP_SDR_Armoire1_Avant.html", "_blank");
+      });
+      let annotation3D1 = new Potree.Annotation({
+        position: new THREE.Vector3(7.35, 16.01, 1.54),
+        title: icon3D1,
+        description: "",
+      });
+      addAnnotationClickHandler(annotation3D1);
+      annotation3D1.visible = true;
+      viewer.scene.annotations.add(annotation3D1);
+
+      //---------------- Liens autre salle ----------------//
+      // Annotation Goto 1
+      let icongoto1 = $(`<!-- Icône pour annotation qui ouvre SDR.html --> 
+      <span style="display: flex; align-items: center;">
+        <!-- Titre textuel à gauche -->
+        <span style="margin-right: 10px; font-size: 16px; color: white;">Salle du TCO</span>
+        <!-- Logo à côté du titre -->
+        <img src="/PAR-LGVSE/build/potree/resources/icons/goto.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+      </span>
+    `);
+    icongoto1.find("img").click((event) => {
+        event.stopPropagation();
+        window.open("/PAR-LGVSE/Potree_html/Potree_TCO.html", "_blank");
+      });
+      let lienTCO = new Potree.Annotation({
+        position: new THREE.Vector3(5.99, 12.39, 1.50),
+        title: icongoto1,
+        description: "",
+      });
+      addAnnotationClickHandler(lienTCO);
+      lienTCO.visible = true;
+      viewer.scene.annotations.add(lienTCO);
+
+
+      //---------------- Liens 360° ----------------//
+      // Annotation 360° 1
+      let icon3601 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/360.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3601.find("img").click((event) => {
+        event.stopPropagation();
+        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010632_20250306161256.JPG");
+      });
+      let annotation3601 = new Potree.Annotation({
+        position: new THREE.Vector3(10.61, 11.69, 1.50),
+        title: icon3601
+      });
+      annotation3601.visible = true;
+      viewer.scene.annotations.add(annotation3601);
+
+      // Annotation 360° 2
+      let icon3602 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/360.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3602.find("img").click((event) => {
+        event.stopPropagation();
+        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010633_20250306161459.JPG");
+      });
+      let annotation3602 = new Potree.Annotation({
+        position: new THREE.Vector3(6.52, 14.15, 1.50),
+        title: icon3602
+      });
+      annotation3602.visible = true;
+      viewer.scene.annotations.add(annotation3602);
+
+      // Annotation 360° 3
+      let icon3603 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/360.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3603.find("img").click((event) => {
+        event.stopPropagation();
+        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010635_20250306161648.JPG");
+      });
+      let annotation3603 = new Potree.Annotation({
+        position: new THREE.Vector3(11.97, 14.41, 1.50),
+        title: icon3603
+      });
+      annotation3603.visible = true;
+      viewer.scene.annotations.add(annotation3603);
+            
+      // Annotation 360° 4
+      let icon3604 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/360.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3604.find("img").click((event) => {
+        event.stopPropagation();
+        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010637_20250306161755.JPG");
+      });
+      let annotation3604 = new Potree.Annotation({
+        position: new THREE.Vector3(7.73, 16.91, 1.50),
+        title: icon3604
+      });
+      annotation3604.visible = true;
+      viewer.scene.annotations.add(annotation3604);
+
+      // Annotation 360° 5
+      let icon3605 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/360.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3605.find("img").click((event) => {
+        event.stopPropagation();
+        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010638_20250306161921.JPG");
+      });
+      let annotation3605 = new Potree.Annotation({
+        position: new THREE.Vector3(3.29, 8.72, 1.50),
+        title: icon3605
+      });
+      annotation3605.visible = true;
+      viewer.scene.annotations.add(annotation3605);
+
+      // Annotation 360° 6
+      let icon3606 = $(`
+        <span>
+          <img src="/PAR-LGVSE/build/potree/resources/icons/360.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+        </span>
+      `);
+      icon3606.find("img").click((event) => {
+        event.stopPropagation();
+        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010640_20250306162054.JPG");
+      });
+      let annotation3606 = new Potree.Annotation({
+        position: new THREE.Vector3(3.68, 11.11, 1.50),
+        title: icon3606
+      });
+      annotation3606.visible = true;
+      viewer.scene.annotations.add(annotation3606);
+
+      //---------------- Seuils de distance d'affichage ----------------//
+      const distanceThresholdAudio = 4; //audios
+      const distanceThresholdText = 0; //textes
+      const distanceThresholdImage = 2; //images
+      const distanceThreshold3D = 2.5; //liens3D
+      const distanceGoto = 4; //liens html
+      const distanceThresholdExp = 1; //textes rapprochés
+      const distanceThresholdAnimation = 0; //video
+      const distanceThreshold360 = 3; //360
+      
+      // Fonction pour vérifier si la caméra est dans la plage de gisement et dans la distance de l'annotation
+      function isCameraInVisibilityCone(cameraPos, annotationPos, maxDistance, gisementRanges) {
+        let camera = viewer.scene.getActiveCamera();
+        if (!camera || !camera.position) return false;
+
+        let distance = cameraPos.distanceTo(annotationPos);
+        if (distance > maxDistance) return false;
+
+        let directionToCamera = new THREE.Vector3().subVectors(cameraPos, annotationPos);
+        directionToCamera.z = 0;
+        directionToCamera.normalize();
+
+        let angleRad = Math.atan2(directionToCamera.y, directionToCamera.x);
+        let angleDeg = THREE.MathUtils.radToDeg(angleRad);
+        angleDeg = (angleDeg - 90 + 360) % 360;
+
+        for (let range of gisementRanges) {
+          let { min, max } = range;
+          if (min < 0) min += 360;
+          if (max < 0) max += 360;
+
+          if (min <= max) {
+            if (angleDeg >= min && angleDeg <= max) return true;
+          } else {
+            if (angleDeg >= min || angleDeg <= max) return true;
+          }
+        }
+
+        return false;  // Important : ajout nécessaire !
+      }
+
+      // Mise à jour de la visibilité des annotations en fonction de la distance et du gisement
+      viewer.addEventListener("update", () => {
+          // Récupère la position de la caméra
+          let cameraPos = viewer.scene.getActiveCamera().position;
+
+          // Liste des annotations avec leurs critères de visibilité
+          let annotations = [
+            { position: annotationImage1.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: 0, max: 110 }], annotation: annotationImage1 },
+            { position: annotationImage2.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -20, max: 150 }], annotation: annotationImage2 },
+            { position: annotationImage3.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -20, max: 130 }], annotation: annotationImage3 },
+            { position: annotationImage4.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: 20, max: 150 }], annotation: annotationImage4 },
+            { position: annotationImage5.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -110, max: 50 }], annotation: annotationImage5 },
+            { position: annotationImage6.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -110, max: 50 }], annotation: annotationImage6 },
+            { position: annotationImage7.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: 60, max: 230 }], annotation: annotationImage7 },
+            { position: annotationImage8.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: 60, max: 230 }], annotation: annotationImage8 },
+            { position: annotationImage9.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -110, max: 10 }], annotation: annotationImage9 },
+            { position: annotationImage10.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -110, max: 10 }], annotation: annotationImage10 },
+            { position: annotationImage11.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -120, max: 50 }], annotation: annotationImage11 },
+            { position: annotationImage12.position, maxDistance: distanceThresholdImage, gisementRanges: [{ min: -120, max: 50 }], annotation: annotationImage12 },
+            { position: annotationImage13.position, maxDistance: 1.5, gisementRanges: [{ min: 60, max: 240 }], annotation: annotationImage13 },
+            { position: annotationImage14.position, maxDistance: 1.5, gisementRanges: [{ min: 60, max: 240 }], annotation: annotationImage14 },
+            { position: annotationImage15.position, maxDistance: 3, gisementRanges: [{ min: 60, max: 240 }], annotation: annotationImage15 },
+            { position: annotationImage16.position, maxDistance: 3, gisementRanges: [{ min: 60, max: 240 }], annotation: annotationImage16 },
+            { position: annotationImage17.position, maxDistance: 3, gisementRanges: [{ min: 60, max: 240 }], annotation: annotationImage17 },
+
+            { position: annotation3D1.position, maxDistance: distanceThreshold3D, gisementRanges: [{ min: 240, max: 60 }], annotation: annotation3D1 },
+            
+            { position: lienTCO.position, maxDistance: distanceGoto, gisementRanges: [{ min: -20, max: 140 }], annotation: lienTCO },
+          
+            { position: annotationcam1.position, maxDistance: distanceThresholdAnimation, gisementRanges: [{ min: 0, max: 360 }], annotation: annotationcam1 },
+          
+            { position: annotation3601.position, maxDistance: distanceThreshold360, gisementRanges: [{ min: 0, max: 360 }], annotation: annotation3601 },
+            { position: annotation3602.position, maxDistance: 2.5, gisementRanges: [{ min: 350, max: 310 }], annotation: annotation3602 },
+            { position: annotation3603.position, maxDistance: distanceThreshold360, gisementRanges: [{ min: 25, max: 90 },{ min: 140, max: 340 }], annotation: annotation3603 },
+            { position: annotation3604.position, maxDistance: distanceThreshold360, gisementRanges: [{ min: 340, max: 135 }, { min: 210, max: 260 }], annotation: annotation3604 },
+            { position: annotation3605.position, maxDistance: distanceThreshold360, gisementRanges: [{ min: 8, max: 110 }, { min: 215, max: 265 }], annotation: annotation3605 },
+            { position: annotation3606.position, maxDistance: distanceThreshold360, gisementRanges: [{ min: 200, max: 165 }], annotation: annotation3606 }
+          ];
+
+          // Vérification de la visibilité de chaque annotation
+          annotations.forEach(item => {
+            let { position, maxDistance, gisementRanges, annotation } = item;
+          
+            annotation.visible = isCameraInVisibilityCone(cameraPos, position, maxDistance, gisementRanges);
+          });
+      });
+    });
+    
+
+
+    //---------------- Début du chargement des modèles 3D (OBJ)----------------//
+    {
+      let manager = new THREE.LoadingManager();
+      manager.onProgress = function ( item, loaded, total ) {
+        console.log( item, loaded, total );
+      };
+      let onProgress = function ( xhr ) {
+        if ( xhr.lengthComputable ) {
+          let percentComplete = xhr.loaded / xhr.total * 100;
+          console.log( Math.round(percentComplete, 2) + '% downloaded' );
+        }
+      };
+      let onError = function ( xhr ) {};
+    
+      // Chargement du modèle 1 (Sol)
+      let mtlLoader1 = new MTLLoader(manager);
+      mtlLoader1.load('https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_OBJ/SDR_3DModel_Sol/SDR_3DModel_Sol.mtl', function(materials) {
+        materials.preload();
+    
+        let objLoader1 = new OBJLoader(manager);
+        objLoader1.setMaterials(materials);
+        objLoader1.load('https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_OBJ/SDR_3DModel_Sol/SDR_3DModel_Sol.obj', function ( object ) {
+          object.position.set(0.90, 6.54, 51.775);
+          object.scale.set(1, 1, 1);
+          object.rotation.set(0, 0, 0);
+          viewer.scene.scene.add( object );
+          window.objMesh1 = object;
+        }, onProgress, onError );
+      });
+
+      // Chargement du modèle 2 (Armoire1_Avant)
+      let mtlLoader2 = new MTLLoader(manager);
+      mtlLoader2.load('https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_OBJ/SDR_3DModel_Armoire1_Avant/Armoire1_avant_model.mtl', function(materials) {
+        materials.preload();
+    
+        let objLoader2 = new OBJLoader(manager);
+        objLoader2.setMaterials(materials);
+        objLoader2.load('https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_OBJ/SDR_3DModel_Armoire1_Avant/Armoire1_avant_model.obj', function ( object ) {
+          object.position.set(0, 0, 0);
+          object.scale.set(1, 1, 1);
+          object.rotation.set(0, 0, 0);
+          viewer.scene.scene.add( object );
+          window.objMesh2 = object;
+        }, onProgress, onError );
+      });
+      
+    }
+    //---------------- Fin du chargement des modèles 3D (OBJ)----------------//
+
+
+    //---------------- Première Animation (Tableau Haut) ----------------//
+    // Paramétrage de la durée de l'animation
+    let animationDuration1 = 40; // Durée de la première animation en secondes
+    const animation1 = new Potree.CameraAnimation(viewer);
+
+    const positions1 = [
+      new THREE.Vector3(2.49, 5.50, 2.65),
+      new THREE.Vector3(1.78, 6.10, 2.65),
+      new THREE.Vector3(1.35, 6.92, 2.65),
+      new THREE.Vector3(1.23, 7.89, 2.65),
+      new THREE.Vector3(1.31, 8.90, 2.65),
+      new THREE.Vector3(1.58, 9.94, 2.65),
+      new THREE.Vector3(2.00, 10.97, 2.65),
+      new THREE.Vector3(2.54, 11.92, 2.65),
+      new THREE.Vector3(3.26, 12.81, 2.65),
+      new THREE.Vector3(3.96, 13.51, 2.65),
+      new THREE.Vector3(4.80, 13.92, 2.65),
+      new THREE.Vector3(5.73, 14.13, 2.65),
+      new THREE.Vector3(6.66, 14.00, 2.65),
+    ];
+
+    const targets1 = [
+      new THREE.Vector3(2.11, 4.85, 2.70),
+      new THREE.Vector3(1.28, 5.63, 2.70),
+      new THREE.Vector3(0.71, 6.67, 2.70),
+      new THREE.Vector3(0.51, 7.83, 2.70),
+      new THREE.Vector3(0.62, 9.01, 2.70),
+      new THREE.Vector3(0.94, 10.16, 2.70),
+      new THREE.Vector3(1.39, 11.24, 2.70),
+      new THREE.Vector3(1.98, 12.29, 2.70),
+      new THREE.Vector3(2.67, 13.24, 2.70),
+      new THREE.Vector3(3.52, 14.06, 2.70),
+      new THREE.Vector3(4.56, 14.61, 2.70),
+      new THREE.Vector3(5.69, 14.82, 2.70),
+      new THREE.Vector3(6.90, 14.65, 2.70),
+    ];
+
+    // Ajouter les points de contrôle dans la première animation
+    for (let i = 0; i < positions1.length; i++) {
+      const cp = animation1.createControlPoint();
+      cp.position.set(positions1[i].x, positions1[i].y, positions1[i].z);
+      cp.target.set(targets1[i].x, targets1[i].y, targets1[i].z);
+    }
+
+    // Ajouter la première animation de la caméra à la scène
+    viewer.scene.addCameraAnimation(animation1);
+
+    // Création du bouton pour la première animation
+    let iconcam1 = $(`<span>
+        <img src="/PAR-LGVSE/build/potree/resources/icons/camera.svg" class="annotation-action-icon" style="filter: invert(1); cursor: pointer;" />
+    </span>`);
+
+    // Ajouter un événement de clic sur le bouton pour lancer la première animation
+    iconcam1.find("img").click((event) => {
+      event.stopPropagation();
+      animation1.play();  // Lancer la première animation lorsque le bouton est cliqué
+    });
+
+    // Créer une annotation pour la première animation
+    let annotationcam1 = new Potree.Annotation({
+      position: new THREE.Vector3(2.65, 4.51, 2.70), // Position de l'annotation
+      title: iconcam1,
+    });
+
+    animation1.setDuration(animationDuration1); // Applique la durée définie ci-dessus
+
+    annotationcam1.visible = true;
+    viewer.scene.annotations.add(annotationcam1);
+    animation1.setVisible(false);  // Désactive la représentation visuelle de l'animation
+
+    // Bouton play pour la première animation
+    const elPlay1 = $('input[name=play1]');
+    elPlay1.click(() => {
+      animation1.play();  // Démarre la première animation
+    });
+
+    //---------------- FIN Première Animation (Tableau Haut) ----------------//
+    
+    
+      
+    // Fonction pour jouer l'audio associé à un hotspot
+    function playHotspotAudio(idOrIndex){
+      // Arrêt des autres pistes
+      document.querySelectorAll('audio[id^="audioHotspot"]').forEach(a=>{
+        a.pause(); a.currentTime = 0;
+      });
+    
+      // ➜ détermine l’id réel
+      const id = (typeof idOrIndex === 'string' && idOrIndex.startsWith('audioHotspot'))
+                 ? idOrIndex
+                 : 'audioHotspot' + idOrIndex;
+    
+      const current = document.getElementById(id);
+      if(current){
+        window.currentHotspotAudio = current;
+        current.play();
+      }
+    }
+    
+    // Définition des hotspots pour la visite guidée
+    const hotspots = [
+      { name: "DÉPART DE LA VISITE", position: new THREE.Vector3(5.51, 14.55, 1.34), target: new THREE.Vector3(8.60, 15, 1.35), audioId: null },  
+      { name: "VUE N°1", position: new THREE.Vector3(7.24, 17.41, 1.51), target: new THREE.Vector3(7.70, 15.11, 1.42), audioId: null },
+      { name: "VUE N°2", position: new THREE.Vector3(7.67, 16.38, 1.45), target: new THREE.Vector3(9.15, 16.98, 1.43), audioId: null },
+      { name: "VUE N°3", position: new THREE.Vector3(11.09, 14.50, 1.37), target: new THREE.Vector3(13.23, 14.03, 1.16), audioId: null },
+      { name: "VUE N°4", position: new THREE.Vector3(13.75, 16.28, 1.56), target: new THREE.Vector3(12.36, 15.66, 1.49), audioId: null },
+      { name: "VUE N°5", position: new THREE.Vector3(11.52, 13.82, 1.50), target: new THREE.Vector3(11.52, 12.06, 1.36), audioId: null },
+      { name: "VUE N°6", position: new THREE.Vector3(9.54, 12.16, 1.56), target: new THREE.Vector3(11.78, 12.29, 1.48), audioId: null },
+      { name: "VUE N°7", position: new THREE.Vector3(15.43, 9.09, 1.46), target: new THREE.Vector3(14.12, 8.56, 1.47), audioId: null },
+      { name: "VUE N°8", position: new THREE.Vector3(12.48, 5.16, 1.74), target: new THREE.Vector3(12.42, 6.73, 1.39), audioId: null },
+      { name: "VUE N°9", position: new THREE.Vector3(10.41, 0.82, 1.95), target: new THREE.Vector3(9.38, 5.80, 1.44), audioId: null },
+      { name: "VUE N°10", position: new THREE.Vector3(5.96, 3.44, 1.37), target: new THREE.Vector3(7.14, 4.19, 1.38), audioId: null },
+      { name: "VUE N°11", position: new THREE.Vector3(0.47, 6.47, 1.96), target: new THREE.Vector3(2.45, 6.86, 1.61), audioId: null },
+      { name: "VUE N°12", position: new THREE.Vector3(2.68, 8.94, 1.45), target: new THREE.Vector3(3.94, 8.92, 1.54), audioId: null },
+      { name: "VUE N°13", position: new THREE.Vector3(3.54, 10.95, 1.59), target: new THREE.Vector3(3.76, 9.79, 1.36), audioId: null },
+      { name: "VUE N°14", position: new THREE.Vector3(3.35, 11.53, 1.47), target: new THREE.Vector3(5, 10.82, 1.40), audioId: null },
+      { name: "FIN DE LA VISITE", position: new THREE.Vector3(5.83, 14.98, 1.29), target: new THREE.Vector3(6.25, 13.00, 1.50), audioId: null },
+    ];
+
+    // Fonction de navigation vers un hotspot donné
+    function goToHotspot(index, playAudio = false) {
+      if (index < 0 || index >= hotspots.length) return;
+      const hp = hotspots[index];
+      const isSameHotspot = index === window.currentHotspotIndex;
+    
+      if (!(isSameHotspot && !playAudio)) {
+        if (window.currentHotspotAudio) {
+          window.currentHotspotAudio.pause();
+          window.currentHotspotAudio.currentTime = 0;
+        }
+        document.getElementById('playPauseIcon').src = "/PAR-LGVSE/build/potree/resources/icons/pause.svg";
+        document.getElementById('playPauseIcon').alt = "Pause";
+      }
+    
+      window.currentHotspotIndex = index;
+      document.getElementById("hotspotName").textContent = hp.name;
+      viewer.scene.view.setView(hp.position, hp.target, 5000);
+      lastHotspotView = { position: hp.position, target: hp.target, name: hp.name };
+    
+      const audioBar = document.getElementById("audioBar");
+      if (hp.audioId && document.getElementById(hp.audioId)) {
+        audioBar.style.display = "flex";
+        if (playAudio) {
+          playHotspotAudio(hp.audioId);
+        }
+      } else {
+        audioBar.style.display = "none";
+        playHotspotAudio(null);
+      }
+    }
+    let currentHotspotIndex = 0;
+    window.hotspots = hotspots;
+    window.goToHotspot = goToHotspot;
+    window.currentHotspotIndex = currentHotspotIndex;
+    // ------------------------------------------
+    // Ajustement dynamique du pointBudget en fonction du FPS
+    // ------------------------------------------
+    let fpsIntervalId = null;
+    let currentPointBudget = 1000000;
+    let lastTime = performance.now();
+    let frameCount = 0;
+    
+    // On incrémente frameCount à chaque update
+    viewer.addEventListener("update", () => {
+      frameCount++;
+    });
+    
+    window.startFPSAdjust = function() {
+      if (fpsIntervalId !== null) return;
+      console.log("▶️ Début ajustement dynamique du FPS");
+      frameCount = 0;
+      lastTime = performance.now();
+    
+      fpsIntervalId = setInterval(() => {
+        const now = performance.now();
+        const delta = (now - lastTime) / 1000;
+        const fps = frameCount / delta;
+        console.log(`FPS : ${fps.toFixed(1)}`);
+    
+        // Logique d’ajustement du budget
+        if (fps < 20) {
+          currentPointBudget = Math.max(currentPointBudget * 0.7, 300000);
+          viewer.useHQ = false;
+          document.getElementById("toggleLissage").textContent = "Activer lissage";
+        } else if (fps <= 40) {
+          currentPointBudget = currentPointBudget * 0.95 + 0.05 * 5000000;
+          viewer.useHQ = true;
+          document.getElementById("toggleLissage").textContent = "Désactiver lissage";
+        } else {
+          currentPointBudget = Math.min(currentPointBudget * 1.1, 10000000);
+          viewer.useHQ = true;
+          document.getElementById("toggleLissage").textContent = "Désactiver lissage";
+        }
+    
+        // Appliquer et afficher
+        viewer.setPointBudget(currentPointBudget);
+        const rounded = Math.round(currentPointBudget);
+        const slider = document.getElementById("pointBudgetSlider");
+        if (slider) slider.value = rounded;
+        document.getElementById("pointBudgetValue").textContent = formatNumber(rounded);
+    
+        // Reset pour la prochaine mesure
+        frameCount = 0;
+        lastTime = now;
+      }, 1000);
+    };
+    
+    window.stopFPSAdjust = function() {
+      if (fpsIntervalId !== null) {
+        console.log("🛑 Arrêt ajustement FPS");
+        clearInterval(fpsIntervalId);
+        fpsIntervalId = null;
+      }
+    };
+  </script>
+  
+  <!-- Script pour gérer les interactions sur la page -->
+  <script>
+    // Fonction utilitaire pour formater les nombres avec des espaces
+    function formatNumber(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+    function blockMouseHandler(e) {
+        if (!e.target.closest(".annotation") && !e.target.closest(".potree_annotation")) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+        }
+    }
+    $(document).ready(function () {
+      // Toggle de la slidebar
+      $("#slidebarToggle").click(function () {
+        $("#slidebar").toggleClass("open");
+      });
+      // Gestion des clics sur les en-têtes d'accordéon
+      $(".accordion-header").click(function () {
+        $(this).toggleClass("active");
+        var content = $(this).next(".accordion-content");
+        content.css("max-height", content.css("max-height") !== "0px" ? "0px" : content.prop("scrollHeight") + "px");
+      });
+    });
+    // Gestion du bouton pour activer/désactiver le lissage (HQ)
+    document.getElementById("toggleLissage").addEventListener("click", function () {
+      viewer.useHQ = !viewer.useHQ;
+      this.textContent = viewer.useHQ ? "Désactiver lissage" : "Activer lissage";
+    });
+    // Mise à jour dynamique du point budget en fonction du slider
+    document.getElementById("pointBudgetSlider").addEventListener("input", function (e) {
+      const val = Math.round(parseInt(e.target.value));   
+      //mise à jour du DOM et du viewer
+      document.getElementById("pointBudgetValue").textContent = formatNumber(val);
+      viewer.setPointBudget(val);
+    });
+    // Bouton de visite guidée
+    document.getElementById("toggleGuidedMode").addEventListener("click", function () {
+        const button = this;
+        const potreeContainer = document.querySelector(".potree_container");
+
+        if (!window.guidedMode) {
+            // === Passage en mode VISITE GUIDÉE ===
+            window.guidedMode = true;
+            button.textContent = "Sortir de la visite guidée";
+
+            // Masquer certains boutons pour simplifier l'affichage
+            document.getElementById('splat_buttons').style.display = 'flex';
+            document.getElementById('splat_buttons').classList.add('guided-mode');
+            document.getElementById('pointBudgetContainer').style.display = 'none';
+            document.getElementById('toggleLissage').style.display = 'none';
+            button.style.display = 'inline-block';
+
+            // Masquer le conteneur des boutons caméra
+            const container = document.getElementById('buttonAndCameraContainer');
+            container.style.display = 'flex';          // ou '' si ton CSS le prévoit
+            
+            // Cache tous les boutons sauf le plein-écran
+            [
+              'measureButton',
+              'deleteButton',
+              'recenterButton',
+              'instructionButton',
+              'cameraPosition'        // le texte XY ;Z
+            ].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'none';
+            });
+            // Afficher la barre de navigation entre hotspots
+            document.querySelector('.hotspot-controls-bar').style.display = 'flex';
+          
+            currentHotspotIndex = 0; //Réinitialise l'index du hotspot
+            // Aller au premier hotspot (ou rester au hotspot actuel si besoin)
+            goToHotspot(0, true);
+
+            viewer.useHQ = true;
+            document.getElementById("toggleLissage").textContent = "Désactiver lissage";
+
+            // BLOQUER la souris pour empêcher la navigation libre
+            ["mousedown", "mousemove", "mouseup", "wheel", "click"].forEach(evtType => {
+                potreeContainer.addEventListener(evtType, blockMouseHandler, true);
+            });
+
+            window.startFPSAdjust();
+        } else {
+            // === Passage en mode EXPLORATION LIBRE ===
+            window.guidedMode = false;
+            button.textContent = "Aller à la visite guidée";
+
+            // Afficher tous les boutons normalement
+            document.getElementById('splat_buttons').style.display = 'flex';
+            document.getElementById('splat_buttons').classList.remove('guided-mode');
+            document.getElementById('pointBudgetContainer').style.display = 'block';
+            document.getElementById('toggleLissage').style.display = 'inline-block';
+            button.style.display = 'inline-block';
+
+            // Réafficher les contrôles de caméra
+            document.getElementById('buttonAndCameraContainer').style.display = 'flex';
+            [
+              'measureButton',
+              'deleteButton',
+              'recenterButton',
+              'instructionButton',
+              'cameraPosition'   // le petit panneau de coordonnées
+            ].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.style.display = 'flex';   // ou '' si ton CSS remet la valeur par défaut
+            });
+            // Cacher la barre de navigation entre hotspots
+            document.querySelector('.hotspot-controls-bar').style.display = 'none';
+            document.getElementById('audioBar').style.display = 'none';
+
+            // DÉBLOQUER la souris pour autoriser la navigation libre
+            ["mousedown", "mousemove", "mouseup", "wheel", "click"].forEach(evtType => {
+                potreeContainer.removeEventListener(evtType, blockMouseHandler, true);
+            });
+
+            window.stopFPSAdjust();
+
+            // === Affichage du conseil performance après passage en exploration libre ===
+            const perfPopup = document.getElementById('performancePopup');
+            const perfClose = perfPopup.querySelector('.custom-popup-close');
+            const perfOk    = document.getElementById('performanceOkBtn');
+          
+            // Ouvre la popup
+            perfPopup.style.display = 'flex';
+          
+            // Fermer la popup au clic sur la croix ou le bouton
+            [perfClose, perfOk].forEach(el =>
+              el.addEventListener('click', () => {
+                perfPopup.style.display = 'none';
+              })
+            );
+
+            // Mettre à jour le curseur de pointBudget
+            const slider = document.getElementById("pointBudgetSlider");
+            if (slider) {
+                slider.value = viewer.getPointBudget();
+            }
+
+            if (viewer.useHQ) {
+                document.getElementById("toggleLissage").textContent = "Désactiver lissage";
+            } else {
+                document.getElementById("toggleLissage").textContent = "Activer lissage";
+            }
+
+            // === Nouvel ajout : remettre le bouton Play/Pause dans l'état "pause" ===
+            if (window.currentHotspotAudio) {
+                 window.currentHotspotAudio.pause();
+                 window.currentHotspotAudio.currentTime = 0;
+             }
+             document.getElementById('playPauseIcon').src = "/PAR-LGVSE/build/potree/resources/icons/pause.svg";
+             document.getElementById('playPauseIcon').alt = "Pause";
+          }
+    });
+    // Affichage en temps réel de la position de la caméra
+    const camDiv = document.getElementById("cameraPosition");
+    const camIcon = document.createElement("img");
+    camIcon.src = "../build/potree/resources/icons/orthographic-camera.svg";
+    camIcon.alt = "Caméra";
+    camIcon.className = "camera-icon";
+    camDiv.insertBefore(camIcon, camDiv.firstChild);
+
+    setInterval(function() {
+      const cam = viewer.scene.getActiveCamera();
+      const view = viewer.scene.view;
+      if (cam && view) {
+        // Coordonnées
+        const x = cam.position.x.toFixed(2).replace('.', ',');
+        const y = cam.position.y.toFixed(2).replace('.', ',');
+        const z = cam.position.z.toFixed(2).replace('.', ',');
+
+        // Gisement (yaw) en radians → degrés sans THREE
+        const azimRad = view.yaw;
+        let azimDeg = azimRad * 180 / Math.PI;         // <-- ici
+        azimDeg = ((azimDeg % 360) + 360) % 360;        // normalisation propre 0° à 360°
+
+        // Met à jour la ligne texte (1er child = img, 2e = texte)
+        camDiv.childNodes[1].textContent =
+          `X : ${x}  - Y : ${y}  - Z : ${z} |  Az : ${azimDeg.toFixed(1)}°`;
+      }
+    }, 100);
+  </script>
+  
+  <!-- Scripts pour la gestion des mesures et des interactions sur le rendu -->
+  <script>
+    $(document).ready(function () {
+      let measurements = [];
+      // Démarrage d'une mesure lorsque le bouton est cliqué
+      $('#measureButton').click(function () {
+        if (viewer.measuringTool) {
+          let newMeasurement = viewer.measuringTool.startInsertion({
+            showDistances: false,
+            showAngles: false,
+            showCoordinates: true,
+            showArea: false,
+            closed: false,
+            maxMarkers: 1,
+            name: 'Point'
+          });
+          measurements.push(newMeasurement);
+        }
+      });
+      // Suppression de toutes les mesures lorsque le bouton est cliqué
+      $('#deleteButton').click(function () {
+        if (viewer.scene) {
+          viewer.scene.removeAllMeasurements();
+          measurements = [];
+        }
+      });
+      // Affichage de la popup d'instructions
+      document.getElementById("instructionButton").addEventListener("click", function(){
+        document.getElementById("instructionPopup").style.display = "flex";
+      });
+      // Bascule en mode plein écran
+      document.getElementById("fullscreenButton").addEventListener("click", function(){
+        toggleFullScreen();
+      });
+    });
+  </script>
+  
+  <!-- Script pour gérer le mode plein écran -->
+  <script>
+    function toggleFullScreen() {
+      var fsButtonImg = document.querySelector("#fullscreenButton img");
+      // Passage en plein écran si aucun élément n'est actuellement en mode plein écran
+      if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) {
+          document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+        // Mise à jour de l'icône pour le mode "Quitter le plein écran"
+        fsButtonImg.src = "/PAR-LGVSE/build/potree/resources/icons/fullscreen-exit.svg";
+        fsButtonImg.alt = "Quitter le plein écran";
+      } else {
+        // Sortie du mode plein écran
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        // Mise à jour de l'icône pour le mode "Plein écran"
+        fsButtonImg.src = "/PAR-LGVSE/build/potree/resources/icons/fullscreen.svg";
+        fsButtonImg.alt = "Plein écran";
+      }
+    }
+  
+    // Mise à jour de l'icône si l'utilisateur quitte le plein écran par un autre moyen
+    document.addEventListener("fullscreenchange", function() {
+      var fsButtonImg = document.querySelector("#fullscreenButton img");
+      if (!document.fullscreenElement) {
+        fsButtonImg.src = "/PAR-LGVSE/build/potree/resources/icons/fullscreen.svg";
+        fsButtonImg.alt = "Plein écran";
+      }
+    });
+  </script>
+  
+  <!-- Scripts pour fermer la popup d'instructions -->
+  <script>
+    document.querySelector(".closeInstructionPopup").addEventListener("click", function(){
+      document.getElementById("instructionPopup").style.display = "none";
+    });
+    document.getElementById("instructionPopup").addEventListener("click", function(e){
+      if(e.target === this){
+        document.getElementById("instructionPopup").style.display = "none";
+      }
+    });
+  </script>
+  
+  <!-- Script pour la navigation entre les hotspots de la visite guidée -->
+  <script>
+    document.getElementById("hotspots").addEventListener("click", function() {
+        // On appelle sans second argument => playAudio = false
+        goToHotspot(currentHotspotIndex, false);
+    });
+
+    // Navigation vers le hotspot précédent
+    document.getElementById("prev").addEventListener("click", function () {
+        currentHotspotIndex--;
+        if (currentHotspotIndex < 0) {
+            currentHotspotIndex = hotspots.length - 1;
+        }
+        // Ici, on précise true pour jouer l’audio lors du changement
+        goToHotspot(currentHotspotIndex, true);
+    });
+    
+    // Navigation vers le hotspot suivant
+    document.getElementById("next").addEventListener("click", function () {
+        currentHotspotIndex++;
+        if (currentHotspotIndex >= hotspots.length) {
+            currentHotspotIndex = 0;
+        }
+        // Ici aussi, playAudio = true
+        goToHotspot(currentHotspotIndex, true);
+    });
+  </script>
+  
+  <!-- Script pour gérer la galerie d'images -->
+  <script>
+    // Tableau contenant les images et leurs descriptions
+    const images = [
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2050.png", info: "Salle des relais attenante au TCO" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2062.png", info: "Salle des relais attenante au TCO" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2109.png", info: "Salle des relais attenante au TCO" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/DJI_20250306103954_0611_D_ETN.png", info: "Salle des relais attenante au TCO" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/DJI_20250306104556_0660_D_ETN.jpeg", info: "Salle des relais attenante au TCO" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0751.JPG", info: "Salle arrière du tableau de contrôle optique" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0753.JPG", info: "Salle arrière du tableau de contrôle optique" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0755.JPG", info: "Salle arrière du tableau de contrôle optique" },
+      { src: "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0757.JPG", info: "Salle arrière du tableau de contrôle optique" }
+    ];
+    let currentIndex = 0;
+
+    function updateGallery() {
+      const galleryItem = document.querySelector('.galleryItem');
+      galleryItem.querySelector('img').src = images[currentIndex].src;
+      galleryItem.setAttribute('data-info', images[currentIndex].info);
+      galleryItem.setAttribute('data-full', images[currentIndex].src);
+    }
+  
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('scrollUp').addEventListener('click', function () {
+        currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+        updateGallery();
+      });
+  
+      document.getElementById('scrollDown').addEventListener('click', function () {
+        currentIndex = (currentIndex === images.length - 1) ? 0 : currentIndex + 1;
+        updateGallery();
+      });
+  
+      const galleryItems = document.querySelectorAll('.galleryItem');
+      const popup = document.getElementById('imagePopup');
+      const popupImage = document.getElementById('popupImage');
+      const popupText = document.getElementById('popupText');
+      const closeBtn = document.querySelector('.closePopup');
+      const globalTitleBubble = document.getElementById('globalTitleBubble');
+  
+      galleryItems.forEach(function (item, index) {
+        item.addEventListener('click', function () {
+          const fullSrc = item.getAttribute('data-full');
+          const infoText = item.getAttribute('data-info');
+          popupImage.src = fullSrc;
+          popupText.textContent = infoText;
+          popup.style.display = 'flex';
+  
+          // 💡 Important : indique qu'on vient de la galerie
+          popup.dataset.fromGallery = "true";
+  
+          // 💡 Trouve l'index de cette image dans le tableau
+          const foundIndex = images.findIndex(img => img.src === fullSrc);
+          if (foundIndex !== -1) currentIndex = foundIndex;
+  
+          // Affiche les flèches si on est bien sur une image de la galerie
+          document.getElementById('popupLeftArrow').style.display = "block";
+          document.getElementById('popupRightArrow').style.display = "block";
+        });
+  
+        item.addEventListener('mouseenter', function () {
+          const info = item.getAttribute('data-info');
+          globalTitleBubble.textContent = info;
+          globalTitleBubble.style.display = 'block';
+          const rect = item.getBoundingClientRect();
+          const bubbleRect = globalTitleBubble.getBoundingClientRect();
+          const left = rect.left - bubbleRect.width - 5;
+          const top = rect.top + (rect.height / 2) - (bubbleRect.height / 2);
+          globalTitleBubble.style.left = left + 'px';
+          globalTitleBubble.style.top = top + 'px';
+        });
+  
+        item.addEventListener('mouseleave', function () {
+          globalTitleBubble.style.display = 'none';
+        });
+      });
+  
+      closeBtn.addEventListener('click', function () {
+        popup.style.display = 'none';
+        popupImage.src = '';
+        popupText.textContent = '';
+        scale = 1;
+        panX = 0;
+        panY = 0;
+        updateTransform();
+  
+        // Masquer les flèches
+        popup.dataset.fromGallery = "false";
+        document.getElementById('popupLeftArrow').style.display = "none";
+        document.getElementById('popupRightArrow').style.display = "none";
+      });
+  
+      popup.addEventListener('click', function (e) {
+        if (e.target === popup) {
+          closeBtn.click();
+        }
+      });
+  
+      // Navigation avec les flèches dans la popup
+      document.getElementById('popupLeftArrow').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (popup.dataset.fromGallery === "true") {
+          currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+          popupImage.src = images[currentIndex].src;
+          popupText.textContent = images[currentIndex].info;
+        }
+      });
+  
+      document.getElementById('popupRightArrow').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (popup.dataset.fromGallery === "true") {
+          currentIndex = (currentIndex + 1) % images.length;
+          popupImage.src = images[currentIndex].src;
+          popupText.textContent = images[currentIndex].info;
+        }
+      });
+
+      // Navigation avec les touches du clavier
+      document.addEventListener('keydown', function (e) {
+        const popup = document.getElementById('imagePopup');
+        if (popup.style.display === 'flex' && popup.dataset.fromGallery === "true") {
+          if (e.key === 'ArrowLeft') {
+            currentIndex = (currentIndex === 0) ? images.length - 1 : currentIndex - 1;
+            document.getElementById('popupImage').src = images[currentIndex].src;
+            document.getElementById('popupText').textContent = images[currentIndex].info;
+          } else if (e.key === 'ArrowRight') {
+            currentIndex = (currentIndex + 1) % images.length;
+            document.getElementById('popupImage').src = images[currentIndex].src;
+            document.getElementById('popupText').textContent = images[currentIndex].info;
+          }
+        }
+      });
+    });
+  </script>
+  
+  <!-- Script pour gérer la popup vidéo -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const videoThumbnail = document.getElementById('videoThumbnail');
+      const videoPopup = document.getElementById('videoPopup');
+      const popupVideo = document.getElementById('popupVideo');
+      const closeVideoPopup = document.querySelector('.closeVideoPopup');
+      
+      // Sauvegarde des paramètres actuels du viewer
+      let savedPointBudget = viewer ? viewer.pointBudget : 2000000;
+      let savedUseHQ = viewer ? viewer.useHQ : false;
+      
+      // Affichage de la popup vidéo lors du clic sur la miniature
+      if(videoThumbnail){
+        videoThumbnail.addEventListener('click', function () {
+          savedPointBudget = viewer.pointBudget;
+          savedUseHQ = viewer.useHQ;
+          viewer.setPointBudget(100000);
+          viewer.useHQ = false;
+          videoPopup.style.display = 'flex';
+          popupVideo.querySelector('source').src = "https://storage.googleapis.com/projet-potree-sncf/Vid%C3%A9os/Version%20Courte%20PAR.mp4";
+          popupVideo.load();
+          popupVideo.play();
+        });
+      }
+      
+      // Fermeture de la popup vidéo et restauration des paramètres
+      if(closeVideoPopup){
+        closeVideoPopup.addEventListener('click', function () {
+          videoPopup.style.display = 'none';
+          popupVideo.pause();
+          popupVideo.currentTime = 0;
+          popupVideo.querySelector('source').src = '';
+          viewer.setPointBudget(savedPointBudget);
+          viewer.useHQ = savedUseHQ;
+        });
+      }
+      
+      if(videoPopup){
+        videoPopup.addEventListener('click', function (e) {
+          if (e.target === videoPopup) {
+            closeVideoPopup.click();
+          }
+        });
+      }
+    });
+  </script>
+  
+  <!-- Script pour gérer le zoom et le pan sur l'image de la popup -->
+  <script>
+    const popupImage = document.getElementById('popupImage');
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    const zoomFactor = 1.1;
+    const maxScale = 5;
+    const minScale = 1;
+  
+    function updateTransform() {
+      popupImage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      popupImage.style.cursor = (scale > 1) ? 'grab' : 'default';
+    }
+  
+    popupImage.addEventListener('wheel', function (e) {
+      e.preventDefault();
+  
+      const rect = popupImage.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+  
+      const imageCX = rect.width / 2;
+      const imageCY = rect.height / 2;
+  
+      const offsetX = mouseX - imageCX;
+      const offsetY = mouseY - imageCY;
+  
+      const zoomingIn = e.deltaY < 0;
+      const oldScale = scale;
+      const newScale = Math.max(minScale, Math.min(maxScale, scale * (zoomingIn ? zoomFactor : 1 / zoomFactor)));
+  
+      if (zoomingIn || newScale > 1.05) {
+        const zoomRatio = newScale / oldScale;
+        panX -= offsetX * (zoomRatio - 1);
+        panY -= offsetY * (zoomRatio - 1);
+      }
+  
+      if (!zoomingIn && newScale <= 1.05) {
+        const t = (newScale - 1) / 0.05; // entre 1 et 0
+        panX *= t;
+        panY *= t;
+      }
+  
+      scale = newScale;
+      updateTransform();
+    });
+  
+    // PAN uniquement si zoomé
+    let isPanning = false, startX = 0, startY = 0;
+  
+    popupImage.addEventListener('mousedown', (e) => {
+      if (scale <= 1) return; // Pas de pan si taille originale
+      isPanning = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+      popupImage.style.cursor = 'grabbing';
+    });
+  
+    document.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+  
+    document.addEventListener('mouseup', () => {
+      isPanning = false;
+      popupImage.style.cursor = (scale > 1) ? 'grab' : 'default';
+    });
+  
+    popupImage.addEventListener('dragstart', (e) => e.preventDefault());
+  
+    // Réinitialisation à la fermeture
+    document.querySelector('.closePopup').addEventListener('click', () => {
+      scale = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    });
+  </script>
+
+  
+  <!-- Gestion du choix du mode d'utilisation : Expert ou Visite guidée -->
+  <script>
+    document.getElementById('btnExpert').addEventListener('click', function() {
+        document.getElementById('welcomePopup').style.display = 'none';
+        
+        // Masquer la barre de visite guidée et la barre audio
+        document.querySelector('.hotspot-controls-bar').style.display = 'none';
+        document.getElementById('audioBar').style.display = 'none';
+
+        // === afficher le conseil performance ===
+        const perfPopup  = document.getElementById('performancePopup');
+        const perfClose  = perfPopup.querySelector('.custom-popup-close');
+        const perfOk     = document.getElementById('performanceOkBtn');
+      
+        // on ouvre la popup
+        perfPopup.style.display = 'flex';
+      
+        // on ferme la popup au clic sur la croix ou le bouton “J’ai compris”
+        [perfClose, perfOk].forEach(el =>
+          el.addEventListener('click', () => {
+            perfPopup.style.display = 'none';
+          })
+        );
+    });
+    
+    document.getElementById('btnSimplified').addEventListener('click', function() {
+      document.getElementById('splat_buttons').style.display = 'flex';
+      document.getElementById('pointBudgetContainer').style.display = 'none';
+      document.getElementById('toggleLissage').style.display = 'none';
+      window.startFPSAdjust();
+      document.getElementById('toggleGuidedMode').textContent = "Sortir de la visite guidée";
+      const container = document.getElementById('buttonAndCameraContainer');
+      container.style.display = 'flex';    
+      // Cache tous les boutons sauf le plein-écran
+      [
+        'measureButton',
+        'deleteButton',
+        'recenterButton',
+        'instructionButton',
+        'cameraPosition'        // le texte XY ;Z
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      viewer.useHQ = true;
+      window.guidedMode = true;
+      document.getElementById("toggleLissage").textContent = "Désactiver lissage";
+      document.getElementById('welcomePopup').style.display = 'none';
+
+      // Afficher la popup d'instructions
+      document.getElementById('instructionsPopup').style.display = 'block';
+      
+      const potreeContainer = document.querySelector(".potree_container");
+      // Désactivation des interactions sur le conteneur Potree sauf sur les annotations
+      ["mousedown", "mousemove", "mouseup", "wheel", "click"].forEach(evtType => {
+          potreeContainer.addEventListener(evtType, blockMouseHandler, true);
+      });
+    });
+  </script>
+
+
+  <!-- Gestion du Popup d'instruction de visite guidée -->
+  <script>
+    document.getElementById('startGuidedTourBtn').addEventListener('click', function() {
+        // Fermer la popup d'instructions
+        document.getElementById('instructionsPopup').style.display = 'none';
+
+        // Lancer normalement la visite guidée (y compris l'audio et la navigation entre les hotspots)
+        goToHotspot(0, true);  // Retour au premier hotspot
+    });
+  </script>
+  
+  <!-- Masquage de l'écran de chargement une fois la page chargée -->
+  <script>
+    window.addEventListener('load', function () {
+      setTimeout(function(){
+        document.getElementById('splash').style.display = 'none';
+      }, 0);
+    });
+  </script>
+  
+  <!-- Gestion des contrôles audio -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const audioSeek = document.getElementById('audioSeek');
+      const playPauseButton = document.getElementById('playPauseButton');
+      const muteButton = document.getElementById('muteButton');
+      let isMuted = false;
+      // Synchronisation du slider audio avec l'avancement de l'audio
+      audioSeek.addEventListener('input', function () {
+        if (window.currentHotspotAudio && window.currentHotspotAudio.duration) {
+          window.currentHotspotAudio.currentTime = (this.value / 100) * window.currentHotspotAudio.duration;
+        }
+      });
+      setInterval(function () {
+        if (window.currentHotspotAudio && window.currentHotspotAudio.duration) {
+          audioSeek.value = (window.currentHotspotAudio.currentTime / window.currentHotspotAudio.duration) * 100;
+        }
+      }, 100);
+      // Gestion du bouton play/pause pour l'audio
+      playPauseButton.addEventListener('click', function () {
+        if (window.currentHotspotAudio) {
+          if (window.currentHotspotAudio.paused) {
+            window.currentHotspotAudio.play();
+            document.getElementById('playPauseIcon').src = "/PAR-LGVSE/build/potree/resources/icons/pause.svg";
+            document.getElementById('playPauseIcon').alt = "Pause";
+          } else {
+            window.currentHotspotAudio.pause();
+            document.getElementById('playPauseIcon').src = "/PAR-LGVSE/build/potree/resources/icons/play.svg";
+            document.getElementById('playPauseIcon').alt = "Play";
+          }
+        }
+      });
+      // Gestion du bouton mute/unmute pour l'audio
+      muteButton.addEventListener('click', function () {
+        isMuted = !isMuted;
+        const audios = [
+          document.getElementById('audioHotspot0'),
+          document.getElementById('audioHotspot1'),
+          document.getElementById('audioHotspot2')
+        ];
+        audios.forEach(audio => {
+          if (audio) {
+            audio.muted = isMuted;
+          }
+        });
+        if (isMuted) {
+          document.getElementById('muteIcon').src = "/PAR-LGVSE/build/potree/resources/icons/volume-silent-white-icon.svg";
+          document.getElementById('muteIcon').alt = "Unmute";
+        } else {
+          document.getElementById('muteIcon').src = "/PAR-LGVSE/build/potree/resources/icons/volume-medium-white-icon.svg";
+          document.getElementById('muteIcon').alt = "Mute";
+        }
+      });
+    });
+  </script>
+
+  <script>
+    function open360Viewer(imagePath) {
+      document.getElementById("popup360").style.display = "block";
+      pannellum.viewer('panorama', {
+        type: 'equirectangular',
+        panorama: imagePath,
+        autoLoad: true,
+        showControls: false,     // Supprime tous les boutons (haut-gauche)
+        compass: false,          // Supprime l’icône d’orientation
+        showZoomCtrl: false,     // Supprime le zoom
+        showFullscreenCtrl: false,
+        showControlsOnHover: false,
+        mouseZoom: true          // Optionnel : garde le zoom molette si tu veux
+      });
+    }
+
+    document.getElementById("close360").addEventListener("click", function() {
+      document.getElementById("popup360").style.display = "none";
+      document.getElementById("panorama").innerHTML = ""; // Réinitialise le viewer
+    });
+  </script>
+
+  <script>
+    // Liste des liens d'images sur Google Cloud Storage
+    const imageLinks = [
+      "https://storage.googleapis.com/projet-potree-sncf/Images_orient%C3%A9es/Armoire2_arri%C3%A8re/1H3A8819.JPG",
+      // Ajoutez ici d'autres liens si nécessaire
+    ];
+  </script>
+
+  <!-- Gestion de la fenetre popup des textes -->
+  <script>
+    function showTextAnnotationCustom(description) {
+        const popup = document.getElementById('textAnnotationPopupCustom');
+        const content = document.getElementById('textAnnotationContentCustom');
+        content.innerHTML = description;
+        popup.style.display = 'block';
+    }
+    
+    function hideTextAnnotationCustom() {
+        // On arrête et on remet à zéro tous les audios d’annotation
+        document.querySelectorAll('audio[id^="audioAnnotation"]').forEach(a => {
+            a.pause();
+            a.currentTime = 0;
+        });
+  
+        // On cache la popup
+        document.getElementById('textAnnotationPopupCustom').style.display = 'none';
+    }
+  </script>
+
+  <script>
+  /* ---------- POPUP INFOS CONNEXION ---------- */
+  (function(){
+    const wifiBtn   = document.getElementById("wifiButton");
+    const wifiPopup = document.getElementById("wifiPopup");
+    const closeWiFi = wifiPopup.querySelector(".closeWifiPopup");
+    const arc       = document.getElementById("gauge-arc");
+    const arcLen    = arc.getTotalLength();          // longueur réelle du demi-cercle
+    arc.setAttribute("stroke-dasharray", `0 ${arcLen}`);
+  
+    wifiBtn.addEventListener("click", () => {
+      wifiPopup.style.display = "flex";
+      runConnectionTest();       // lance (ou relance) la mesure à chaque ouverture
+    });
+  
+    closeWiFi.addEventListener("click", () => {
+      wifiPopup.style.display = "none";
+    });
+    wifiPopup.addEventListener("click", e => {
+      if (e.target === wifiPopup) closeWiFi.click(); // clic hors contenu = fermeture
+    });
+  
+    /* ---- logique de mesure ---- */
+  
+    async function runConnectionTest(){
+      const speedEl  = document.getElementById("connection-speed");
+      const statusEl = document.getElementById("connection-status");
+  
+      speedEl.textContent  = "…";
+      statusEl.textContent = "Test en cours…";
+      statusEl.style.color = "#555";
+      arc.setAttribute("stroke", "red");
+      arc.setAttribute("stroke-dasharray", `0 ${arcLen}`);
+  
+      let mbps = 0;
+      try{
+        mbps = await measureDownloadSpeed();     // ← ci-dessous
+      }catch(e){
+        console.warn(e);
+      }
+      speedEl.textContent = mbps.toFixed(0);
+  
+      // remplissage jauge (0-1000 Mb/s max)
+      const pct  = Math.min(mbps / 1000, 1);
+      const dash = pct * arcLen;
+      arc.setAttribute("stroke-dasharray", `${dash} ${arcLen}`);
+  
+      /* couleur + texte */
+      let color, label;
+      if (mbps >= 950){ color="green";      label="EXCELLENTE"; }
+      else if (mbps >= 500){ color="limegreen"; label="TRÈS BONNE"; }
+      else if (mbps >= 130){ color="#DAA520";   label="BONNE"; }
+      else if (mbps >= 25) { color="orange";    label="CORRECTE"; }
+      else                 { color="red";       label="MAUVAISE"; }
+  
+      arc.setAttribute("stroke", color);
+      statusEl.textContent = label;
+      statusEl.style.color = color;
+    }
+  
+    /* ---- mesure réelle (même méthode que la page d’accueil) ---- */
+    function measureDownloadSpeed(){
+      return new Promise((resolve, reject) => {
+        const fileUrl      = 'https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_NXS/TCO_3DModel_PRS1.nxs';
+        const downloadSize = 66.9 * 1024 * 1024;   // octets (≈ 66,9 Mo)
+        const t0 = performance.now();
+  
+        fetch(fileUrl + '?_cb=' + t0)
+          .then(r => { if(!r.ok) throw new Error("réseau"); return r.blob(); })
+          .then(() => {
+            const duration = (performance.now() - t0) / 1000;  // s
+            const bits     = downloadSize * 8;
+            resolve(bits / duration / 1e6);                    // Mb/s
+          })
+          .catch(reject);
+      });
+    }
+  })();
+  </script>
+  
+</body>
+</html>
