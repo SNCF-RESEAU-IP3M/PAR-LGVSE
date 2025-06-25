@@ -1,7 +1,7 @@
 
-import * as THREE from "/Potree_Sncf_Projet/libs/three.js/build/three.module.js";
-import {OrientedImageControls} from "/Potree_Sncf_Projet/src/modules/OrientedImages/OrientedImageControls.js";
-import { EventDispatcher } from "/Potree_Sncf_Projet/src/EventDispatcher.js";
+import * as THREE from "/PAR-LGVSE/libs/three.js/build/three.module.js";
+import {OrientedImageControls} from "/PAR-LGVSE/src/modules/OrientedImages/OrientedImageControls.js";
+import { EventDispatcher } from "/PAR-LGVSE/src/EventDispatcher.js";
 
 // https://support.pix4d.com/hc/en-us/articles/205675256-How-are-yaw-pitch-roll-defined
 // https://support.pix4d.com/hc/en-us/articles/202558969-How-are-omega-phi-kappa-defined
