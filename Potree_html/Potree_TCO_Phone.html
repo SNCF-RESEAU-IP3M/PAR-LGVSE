@@ -439,7 +439,7 @@
     </div>
     <div id="buttonsContainer">
       <div id="wifiButton" class="buttonFrame tooltip-container tooltip-right">
-        <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Logo/wifi.svg" alt="Infos connexion">
+        <img src="https://potree-proxy.onrender.com/cloud-data/Images/Logo/wifi.svg" alt="Infos connexion">
         <span class="custom-tooltip">Infos connexion</span>
       </div>
     </div>
@@ -633,8 +633,8 @@
   </div>
 
   <!-- Éléments audio pour les annotations -->
-  <audio id="audioAnnotation1" src="https://storage.googleapis.com/projet-potree-sncf/Audios/Extrait2.mp3" preload="auto"></audio>
-  <audio id="audioAnnotation2" src="https://storage.googleapis.com/projet-potree-sncf/Audios/Extrait1.mp3" preload="auto"></audio>
+  <audio id="audioAnnotation1" src="https://potree-proxy.onrender.com/cloud-data/Audios/Extrait2.mp3" preload="auto"></audio>
+  <audio id="audioAnnotation2" src="https://potree-proxy.onrender.com/cloud-data/Audios/Extrait1.mp3" preload="auto"></audio>
 
   <!-- Popup Image 360° -->
   <div id="popup360" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999;">
@@ -730,7 +730,7 @@
       }
     }
   
-    Potree.loadPointCloud("https://storage.googleapis.com/projet-potree-sncf/NuageTCO/Nuage_TCO_Complet/metadata.json", "Salle_TCO", function(e){
+    Potree.loadPointCloud("https://potree-proxy.onrender.com/cloud-data/NuageTCO/Nuage_TCO_Complet/metadata.json", "Salle_TCO", function(e){
       viewer.scene.addPointCloud(e.pointcloud);
       let material = e.pointcloud.material;
       material.size = 1.3;
@@ -1251,7 +1251,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage1.cameraPosition, annotationImage1.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0701.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0701.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1279,7 +1279,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage2.cameraPosition, annotationImage2.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0763.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0763.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1307,7 +1307,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage3.cameraPosition, annotationImage3.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0764.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0764.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1335,7 +1335,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage4.cameraPosition, annotationImage4.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0762.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0762.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1363,7 +1363,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage5.cameraPosition, annotationImage5.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0718.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0718.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1391,7 +1391,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage6.cameraPosition, annotationImage6.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0710.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0710.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1419,7 +1419,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage7.cameraPosition, annotationImage7.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0699.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0699.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1446,7 +1446,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage8.cameraPosition, annotationImage8.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/IMG_2190.jpg";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/IMG_2190.jpg";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1473,7 +1473,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage9.cameraPosition, annotationImage9.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/20250306_140201.jpg";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/20250306_140201.jpg";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1500,7 +1500,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage10.cameraPosition, annotationImage10.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/T%C3%A9l%C3%A9phone.png";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/T%C3%A9l%C3%A9phone.png";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1527,7 +1527,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage11.cameraPosition, annotationImage11.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/Poste_informatique.png";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/Poste_informatique.png";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1554,7 +1554,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage12.cameraPosition, annotationImage12.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0720.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0720.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1581,7 +1581,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage13.cameraPosition, annotationImage13.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0722.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0722.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1608,7 +1608,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage14.cameraPosition, annotationImage14.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0725.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0725.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1635,7 +1635,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage15.cameraPosition, annotationImage15.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0728.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0728.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1662,7 +1662,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage16.cameraPosition, annotationImage16.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0731.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0731.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1689,7 +1689,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage17.cameraPosition, annotationImage17.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Images_Techniques/175A0733.JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Images_Techniques/175A0733.JPG";
           const imageDescription = "";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1863,7 +1863,7 @@
       `);
       icon3601.find("img").click((event) => {
         event.stopPropagation();
-        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010641_20250306162238.JPG");
+        open360Viewer("https://potree-proxy.onrender.com/cloud-data/Images/Images_360/R0010641_20250306162238.JPG");
       });
       let annotation3601 = new Potree.Annotation({
         position: new THREE.Vector3(7.00, 8.00, 1.70),
@@ -1880,7 +1880,7 @@
       `);
       icon3602.find("img").click((event) => {
         event.stopPropagation();
-        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/R0010642_20250306162347.JPG");
+        open360Viewer("https://potree-proxy.onrender.com/cloud-data/Images/Images_360/R0010642_20250306162347.JPG");
       });
       let annotation3602 = new Potree.Annotation({
         position: new THREE.Vector3(4.06, 9.95, 1.50),
@@ -1897,7 +1897,7 @@
       `);
       icon3603.find("img").click((event) => {
         event.stopPropagation();
-        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/8192x4096_DJI_20250306104823_0673_D_ETN.png");
+        open360Viewer("https://potree-proxy.onrender.com/cloud-data/Images/Images_360/8192x4096_DJI_20250306104823_0673_D_ETN.png");
       });
       let annotation3603 = new Potree.Annotation({
         position: new THREE.Vector3(8.96, 15.89, 1.35),
@@ -1914,7 +1914,7 @@
       `);
       icon3604.find("img").click((event) => {
         event.stopPropagation();
-        open360Viewer("https://storage.googleapis.com/projet-potree-sncf/Images/Images_360/8192x4096_DJI_20250306140048_0775_D_ETN.png");
+        open360Viewer("https://potree-proxy.onrender.com/cloud-data/Images/Images_360/8192x4096_DJI_20250306140048_0775_D_ETN.png");
       });
       let annotation3604 = new Potree.Annotation({
         position: new THREE.Vector3(7.00, 8.00, 3.50),
@@ -2138,7 +2138,7 @@
         viewer.setPointBudget(100000);
         viewer.useHQ = false;
         videoPopup.style.display = 'flex';
-        popupVideo.querySelector('source').src = "https://storage.googleapis.com/projet-potree-sncf/Vid%C3%A9os/Version%20Courte%20PAR.mp4";
+        popupVideo.querySelector('source').src = "https://potree-proxy.onrender.com/cloud-data/Vid%C3%A9os/Version%20Courte%20PAR.mp4";
         popupVideo.load();
         popupVideo.play();
       });
@@ -2536,7 +2536,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ---- mesure réelle (même méthode que la page d’accueil) ---- */
     function measureDownloadSpeed(){
       return new Promise((resolve, reject) => {
-        const fileUrl      = 'https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_NXS/TCO_3DModel_PRS1.nxs';
+        const fileUrl      = 'https://potree-proxy.onrender.com/cloud-data/3DModel/3DModel_NXS/TCO_3DModel_PRS1.nxs';
         const downloadSize = 66.9 * 1024 * 1024;   // octets (≈ 66,9 Mo)
         const t0 = performance.now();
   
