@@ -435,7 +435,7 @@
     <div id="buttonsContainer">
       <!-- Bouton pourconnexion Wifi -->
       <div id="wifiButton" class="buttonFrame tooltip-container tooltip-right">
-        <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Logo/wifi.svg" alt="Infos connexion">
+        <img src="https://potree-proxy.onrender.com/cloud-data/Images/Logo/wifi.svg" alt="Infos connexion">
         <span class="custom-tooltip">Infos connexion</span>
       </div>
     </div>
@@ -629,8 +629,8 @@
   </div>
 
   <!-- Éléments audio pour les annotations -->
-  <audio id="audioAnnotation1" src="https://storage.googleapis.com/projet-potree-sncf/Audios/Extrait2.mp3" preload="auto"></audio>
-  <audio id="audioAnnotation2" src="https://storage.googleapis.com/projet-potree-sncf/Audios/Extrait1.mp3" preload="auto"></audio>
+  <audio id="audioAnnotation1" src="https://potree-proxy.onrender.com/cloud-data/Audios/Extrait2.mp3" preload="auto"></audio>
+  <audio id="audioAnnotation2" src="https://potree-proxy.onrender.com/cloud-data/Audios/Extrait1.mp3" preload="auto"></audio>
 
   <!-- Popup Image 360° -->
   <div id="popup360" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999;">
@@ -727,7 +727,7 @@
       }
     }
   
-    Potree.loadPointCloud("https://storage.googleapis.com/projet-potree-sncf/NuageEXT/metadata.json", "exterieur", function(e){
+    Potree.loadPointCloud("https://potree-proxy.onrender.com/cloud-data/NuageEXT/metadata.json", "exterieur", function(e){
       viewer.scene.addPointCloud(e.pointcloud);
       let material = e.pointcloud.material;
       material.size = 1.3;
@@ -977,7 +977,7 @@
         );
         showTextAnnotationCustom(`
             <div style="display: flex; align-items: flex-start; gap: 15px;">
-              <img src="https://storage.googleapis.com/projet-potree-sncf/Images/Archives/Portrait_Henri_LANG.jpg" alt="Henri Lang" style="width: 40%; border-radius: 5px;" />
+              <img src="https://potree-proxy.onrender.com/cloud-data/Images/Archives/Portrait_Henri_LANG.jpg" alt="Henri Lang" style="width: 40%; border-radius: 5px;" />
               <div style="flex: 1;">
                 <h3 style="margin-top: 0;">Henri Lang (1895–1944)</h3>
                 <p style="font-size: 0.8em; color: #aaa; margin: 0 0 10px 0;"><em>Source : Mémorial de la Shoah</em></p>
@@ -1000,7 +1000,7 @@
         event.stopPropagation();
         viewer.scene.view.setView(annotationImage1.cameraPosition, annotationImage1.cameraTarget, 1000);
         setTimeout(() => {
-          const imageUrl = "https://storage.googleapis.com/projet-potree-sncf/Images/Archives/2023_02_04_PARIS_FACE_CACHEE_PAR_Sud-Est_(c)FBC%20(3).JPG";
+          const imageUrl = "https://potree-proxy.onrender.com/cloud-data/Images/Archives/2023_02_04_PARIS_FACE_CACHEE_PAR_Sud-Est_(c)FBC%20(3).JPG";
           const imageDescription = "Porte d'entrée du centre";
           $("#popupImage").attr("src", imageUrl);
           $("#popupText").text(imageDescription);
@@ -1210,7 +1210,7 @@
         viewer.setPointBudget(100000);
         viewer.useHQ = false;
         videoPopup.style.display = 'flex';
-        popupVideo.querySelector('source').src = "https://storage.googleapis.com/projet-potree-sncf/Vid%C3%A9os/Version%20Courte%20PAR.mp4";
+        popupVideo.querySelector('source').src = "https://potree-proxy.onrender.com/cloud-data/Vid%C3%A9os/Version%20Courte%20PAR.mp4";
         popupVideo.load();
         popupVideo.play();
       });
@@ -1608,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ---- mesure réelle (même méthode que la page d’accueil) ---- */
     function measureDownloadSpeed(){
       return new Promise((resolve, reject) => {
-        const fileUrl      = 'https://storage.googleapis.com/projet-potree-sncf/3DModel/3DModel_NXS/TCO_3DModel_PRS1.nxs';
+        const fileUrl      = 'https://potree-proxy.onrender.com/cloud-data/3DModel/3DModel_NXS/TCO_3DModel_PRS1.nxs';
         const downloadSize = 66.9 * 1024 * 1024;   // octets (≈ 66,9 Mo)
         const t0 = performance.now();
   
