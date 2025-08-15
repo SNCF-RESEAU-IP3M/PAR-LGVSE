@@ -10,6 +10,48 @@
   <link rel="icon" href="https://potree-proxy.onrender.com/cloud-data/Images/Logo/Logo_LGV_Simple.png" type="image/png">
 
   <style>
+    #popup-warning {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    #popup-warning .popup-content {
+      background: #b30000;
+      color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      animation: popin 0.3s ease-out;
+    }
+    #popup-warning h2 {
+      margin-top: 0;
+      font-size: 1.8rem;
+    }
+    #popup-warning p {
+      font-size: 1rem;
+      line-height: 1.4;
+      margin: 1rem 0;
+    }
+    #popup-warning button {
+      background: white;
+      color: #b30000;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    @keyframes popin {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
     /* Reset & box-sizing */
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
@@ -447,6 +489,18 @@
     </div>
   </div>
 
+  <!-- POPUP VERSION NON OFFICIELLE -->
+  <div id="popup-warning">
+    <div class="popup-content">
+      <h2>⚠️ Version non officielle</h2>
+      <p>
+        Cette version est destinée uniquement aux <strong>Journées de la Topographie 2025</strong>.<br>
+        Son usage en dehors de cet évènement n’est pas autorisé.
+      </p>
+      <button id="popup-close">J’ai compris</button>
+    </div>
+  </div>
+
   <!-- Bandeau bas -->
   <div class="bottom-banner" id="bottom-banner">
     <span>&copy; Charles BALLAND – Projet de fin d'études – INSA Strasbourg – Spécialité topographie.</span>
@@ -629,6 +683,16 @@
         statusEl.textContent = status;
         statusEl.style.color   = color;
       }
+    });
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const popup = document.getElementById("popup-warning");
+      const closeBtn = document.getElementById("popup-close");
+      closeBtn.addEventListener("click", () => {
+        popup.style.display = "none";
+      });
     });
   </script>
 
